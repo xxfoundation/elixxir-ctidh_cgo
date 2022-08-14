@@ -17,7 +17,7 @@ func TestVectors(t *testing.T) {
 	err = alicePrivateKey.Unmarshal(alicePrivateKeyBytes)
 	require.NoError(t, err)
 
-	alicePublicKeyHex := "beb16568f41bff232ab157ebf8e0e80d4dea4446d354fdda9805d73d2ff2f8ba57527ef2c36b33177b82435538ef6598e8fbe2de2827c2cc42591126b96f8536"
+	alicePublicKeyHex := "a9f14cf61e8c8b9bf701c704ed66324ec3813eb7869106d636e4f72b09ac07e44979d45634f616ae12d876aec0de546f21cd9219d47e07da0929ec456d939338"
 	alicePublicKeyBytes, err := hex.DecodeString(alicePublicKeyHex)
 	alicePublicKey := new(PublicKey)
 	err = alicePublicKey.Unmarshal(alicePublicKeyBytes)
@@ -48,7 +48,7 @@ func TestVectors(t *testing.T) {
 		t.Logf("bobPublicKeyBytes %x", bobPublicKeyBytes)
 	*/
 
-	bobPublicKeyHex := "5eec9487a6149ed355e59b8a9e3f991f831e43c00d88acba92c4ceb5b294587762529597149994d36da204d21ee72343981f897b9dc36b57c93133461bf4c449"
+	bobPublicKeyHex := "1e4a6a12ae0218f3eda0213d28e640bf4e39a56847b0374576cb02a18219d7c64ea7e87414ce20eb45566f6cf6243e8fb6f4554e5553e6d4418b4ca609ff6c3a"
 	bobPublicKeyBytes, err := hex.DecodeString(bobPublicKeyHex)
 	bobPublicKey := new(PublicKey)
 	err = bobPublicKey.Unmarshal(bobPublicKeyBytes)

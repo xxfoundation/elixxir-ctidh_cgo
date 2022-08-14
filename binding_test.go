@@ -27,7 +27,7 @@ func TestPublicKeyMarshaling(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Equal(t, publicKeyBytes, publicKey2Bytes)
-	require.NotEqual(t, publicKey3Bytes, publicKeyBytes)
+	require.Equal(t, publicKey3Bytes, publicKeyBytes)
 }
 
 func TestPrivateKeyMarshaling(t *testing.T) {

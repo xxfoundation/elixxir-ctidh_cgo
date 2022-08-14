@@ -56,11 +56,11 @@ func (p *PrivateKey) Unmarshal(data []byte) error {
 
 // DerivePublicKey derives a public key given a private key.
 func DerivePublicKey(privKey *PrivateKey) (*PublicKey, error) {
-	C.csidh_private(&privKey.private_key)
-	pubKey := new(PublicKey)
-	ok := C.csidh(&pubKey.public_key, &base, &privKey.private_key)
-	if !ok {
-		return nil, CSIDHError
+	baseKey := new(PublicKey)
+	baseKey.public_key = base
+	pubKey, err := GroupAction(privKey, baseKey)
+	if err != nil {
+		return nil, err
 	}
 	return pubKey, nil
 }
