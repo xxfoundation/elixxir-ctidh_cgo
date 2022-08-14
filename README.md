@@ -68,7 +68,8 @@ export CGO_LDFLAGS="-L/home/human/code/ctidh_cgo/high-ctidh-20210523 -Wl,-rpath,
 go test -v
 ```
 
+
 License
 =======
 
-We're going to select some kind of very permissive software license like Apache or MIT.
+This is public domain.
