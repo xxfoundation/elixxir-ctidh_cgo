@@ -1,4 +1,4 @@
-module github.com/david415/ctidh_cgo
+module git.xx.network/dstainton/ctidh_cgo
 
 go 1.16
 
