@@ -11,6 +11,7 @@ import (
 var base C.public_key
 
 var PublicKeyValidationError error = errors.New("public key validation failure")
+var CSIDHError error = errors.New("CSIDH failure")
 
 // PublicKey is a public CTIDH key.
 type PublicKey struct {
@@ -59,7 +60,7 @@ func DerivePublicKey(privKey *PrivateKey) (*PublicKey, error) {
 	pubKey := new(PublicKey)
 	ok := C.csidh(&pubKey.public_key, &base, &privKey.private_key)
 	if !ok {
-		return nil, errors.New("csidh failure")
+		return nil, CSIDHError
 	}
 	return pubKey, nil
 }
@@ -82,7 +83,7 @@ func GroupAction(privateKey *PrivateKey, publicKey *PublicKey) (*PublicKey, erro
 	sharedKey := new(PublicKey)
 	ok := C.csidh(&sharedKey.public_key, &publicKey.public_key, &privateKey.private_key)
 	if !ok {
-		return nil, errors.New("csidh failure")
+		return nil, CSIDHError
 	}
 	return sharedKey, nil
 }
