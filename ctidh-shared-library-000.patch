@@ -1,0 +1,263 @@
+diff --git a/autogen b/autogen
+index b422515..8fa1c26 100755
+--- a/autogen
++++ b/autogen
+@@ -292,16 +292,22 @@ for bits,primes,batchsize,batchbound in data:
+     f.write('.global uintbig_1\n')
+     f.write('uintbig_1:\n')
+     writeconst(f,1,plimbs)
++    f.write('    .size uintbig_1, %d\n' % pbytes)
++    f.write('    .type uintbig_1, @object\n')
+     f.write('\n')
+ 
+     f.write('.global uintbig_p\n')
+     f.write('uintbig_p:\n')
+     writeconst(f,p,plimbs)
++    f.write('    .size uintbig_p, %d\n' % pbytes)
++    f.write('    .type uintbig_p, @object\n')
+     f.write('\n')
+ 
+     f.write('.global uintbig_four_sqrt_p\n')
+     f.write('uintbig_four_sqrt_p:\n')
+     writeconst(f,sqrt16p,plimbs)
++    f.write('    .size uintbig_four_sqrt_p, %d\n' % pbytes)
++    f.write('    .type uintbig_four_sqrt_p, @object\n')
+     f.write('\n')
+ 
+     f.write('.section .text\n')
+@@ -398,6 +404,10 @@ for bits,primes,batchsize,batchbound in data:
+     f.write('.set pbytes,%d\n' % pbytes)
+     f.write('.set plimbs,%d\n' % plimbs)
+ 
++    f.write('.uintbig_p_local:\n')
++    writeconst(f,p,plimbs)
++    f.write('\n')
++
+     f.write('.inv_min_p_mod_r: /* -p^-1 mod 2^64 */\n')
+     writeconst(f,inv,1)
+     f.write('\n')
+@@ -405,16 +415,22 @@ for bits,primes,batchsize,batchbound in data:
+     f.write('.global fp_0\n')
+     f.write('fp_0:\n')
+     f.write('    .zero %d\n' % pbytes)
++    f.write('    .size fp_0, %d\n' % pbytes)
++    f.write('    .type fp_0, @object\n')
+     f.write('\n')
+ 
+     f.write('.global fp_1\n')
+     f.write('fp_1: /* 2^%d mod p */\n' % pmontbits)
+     writeconst(f,(1<<pmontbits)%p,plimbs)
++    f.write('    .size fp_1, %d\n' % pbytes)
++    f.write('    .type fp_1, @object\n')
+     f.write('\n')
+ 
+     f.write('.global fp_2\n')
+     f.write('fp_2: /* 2^%d mod p */\n' % (pmontbits+1))
+     writeconst(f,(1<<(pmontbits+1))%p,plimbs)
++    f.write('    .size fp_2, %d\n' % pbytes)
++    f.write('    .type fp_2, @object\n')
+     f.write('\n')
+ 
+     f.write('.r_squared_mod_p: /* (2^%d)^2 mod p */\n' % pmontbits)
+@@ -507,9 +523,9 @@ for bits,primes,batchsize,batchbound in data:
+       if len(regi) < 5: regi += ' '
+       f.write('    mov %s[rbp + %d]\n' % (regi,i*8))
+       if i == 0:
+-        f.write('    sub %s[rip + uintbig_p + %d]\n' % (regi,i*8))
++        f.write('    sub %s[rip + .uintbig_p_local + %d]\n' % (regi,i*8))
+       else:
+-        f.write('    sbb %s[rip + uintbig_p + %d]\n' % (regi,i*8))
++        f.write('    sbb %s[rip + .uintbig_p_local + %d]\n' % (regi,i*8))
+       if i < plimbs-8:
+         f.write('    movq [rsp + %d], %s\n' % (8*i,regs[i%len(regs)]))
+ 
+@@ -545,7 +561,8 @@ for bits,primes,batchsize,batchbound in data:
+     f.write('    mov rdx, rdi\n')
+     f.write('.global fp_add3\n')
+     f.write('fp_add3:\n')
+-    f.write('    addq [fp_addsub_count+rip],1\n')
++    f.write('    movq rax, [rip + fp_addsub_count@GOTPCREL]\n')
++    f.write('    addq [rax], 1\n')
+     f.write('    push rdi\n')
+     f.write('    call uintbig_add3\n')
+     f.write('    pop rdi\n')
+@@ -557,21 +574,21 @@ for bits,primes,batchsize,batchbound in data:
+     f.write('  xchg rsi, rdx\n')
+     f.write('.global fp_sub3\n')
+     f.write('fp_sub3:\n')
+-    f.write('    addq [fp_addsub_count+rip],1\n')
++    f.write('    movq rax, [rip + fp_addsub_count@GOTPCREL]\n')
++    f.write('    addq [rax], 1\n')
+     f.write('    push rdi\n')
+     f.write('    call uintbig_sub3\n')
+     f.write('    pop rdi\n')
+-
+     f.write('    neg rax\n')
+     f.write('\n')
+     f.write('    sub rsp, pbytes\n')
+     f.write('\n')
+-    f.write('    mov rcx, [rip + uintbig_p +  0]\n')
++    f.write('    mov rcx, [rip + .uintbig_p_local +  0]\n')
+     f.write('    and rcx, rax\n')
+     f.write('    mov [rsp + 0],rcx\n')
+     f.write('    .set k, 1\n')
+     f.write('    .rept plimbs-1\n')
+-    f.write('        mov rcx, [rip + uintbig_p + 8*k]\n')
++    f.write('        mov rcx, [rip + .uintbig_p_local + 8*k]\n')
+     f.write('        and rcx, rax\n')
+     f.write('        mov [rsp + 8*k], rcx\n')
+     f.write('        .set k, k+1\n')
+@@ -612,7 +629,8 @@ for bits,primes,batchsize,batchbound in data:
+       f.write('\n')
+       f.write('    push rdi\n')
+       f.write('\n')
+-      f.write('    addq [fp_mulsq_count+rip],1\n')
++      f.write('    movq rax, [rip + fp_mulsq_count@GOTPCREL]\n')
++      f.write('    addq [rax], 1\n')
+       f.write('\n')
+       f.write('    mov rdi, rsi\n')
+       f.write('    mov rsi, rdx\n')
+@@ -638,34 +656,34 @@ for bits,primes,batchsize,batchbound in data:
+       f.write('\n')
+       f.write('    xor rax, rax /* clear flags */\n')
+       f.write('\n')
+-      f.write('    mulx rbx, rax, [rip + uintbig_p +  0]\n')
++      f.write('    mulx rbx, rax, [rip + .uintbig_p_local +  0]\n')
+       f.write('    adox \\r0, rax\n')
+       f.write('\n')
+-      f.write('    mulx rcx, rax, [rip + uintbig_p +  8]\n')
++      f.write('    mulx rcx, rax, [rip + .uintbig_p_local +  8]\n')
+       f.write('    adcx \\r1, rbx\n')
+       f.write('    adox \\r1, rax\n')
+       f.write('\n')
+-      f.write('    mulx rbx, rax, [rip + uintbig_p + 16]\n')
++      f.write('    mulx rbx, rax, [rip + .uintbig_p_local + 16]\n')
+       f.write('    adcx \\r2, rcx\n')
+       f.write('    adox \\r2, rax\n')
+       f.write('\n')
+-      f.write('    mulx rcx, rax, [rip + uintbig_p + 24]\n')
++      f.write('    mulx rcx, rax, [rip + .uintbig_p_local + 24]\n')
+       f.write('    adcx \\r3, rbx\n')
+       f.write('    adox \\r3, rax\n')
+       f.write('\n')
+-      f.write('    mulx rbx, rax, [rip + uintbig_p + 32]\n')
++      f.write('    mulx rbx, rax, [rip + .uintbig_p_local + 32]\n')
+       f.write('    adcx \\r4, rcx\n')
+       f.write('    adox \\r4, rax\n')
+       f.write('\n')
+-      f.write('    mulx rcx, rax, [rip + uintbig_p + 40]\n')
++      f.write('    mulx rcx, rax, [rip + .uintbig_p_local + 40]\n')
+       f.write('    adcx \\r5, rbx\n')
+       f.write('    adox \\r5, rax\n')
+       f.write('\n')
+-      f.write('    mulx rbx, rax, [rip + uintbig_p + 48]\n')
++      f.write('    mulx rbx, rax, [rip + .uintbig_p_local + 48]\n')
+       f.write('    adcx \\r6, rcx\n')
+       f.write('    adox \\r6, rax\n')
+       f.write('\n')
+-      f.write('    mulx rcx, rax, [rip + uintbig_p + 56]\n')
++      f.write('    mulx rcx, rax, [rip + .uintbig_p_local + 56]\n')
+       f.write('    adcx \\r7, rbx\n')
+       f.write('    adox \\r7, rax\n')
+       f.write('\n')
+@@ -741,7 +759,8 @@ for bits,primes,batchsize,batchbound in data:
+       f.write('    pop r12\n')
+     else:
+       f.write('\n')
+-      f.write('  addq [fp_mulsq_count+rip],1\n')
++      f.write('  movq rax, [rip + fp_mulsq_count@GOTPCREL]\n')
++      f.write('  addq [rax], 1\n')
+       f.write('\n')
+       f.write('  sub rsp,%d\n' % (8*plimbs+16))
+       f.write('  mov [rsp+%d],rdi\n' % (8*plimbs+8))
+@@ -763,7 +782,7 @@ for bits,primes,batchsize,batchbound in data:
+       f.write('\n')
+       f.write('    xor rax, rax /* clear flags */\n')
+       f.write('\n')
+-      f.write('    mulx rbx, rax, [rip + uintbig_p +  0]\n')
++      f.write('    mulx rbx, rax, [rip + .uintbig_p_local +  0]\n')
+       f.write('    adox r11, rax\n')
+       f.write('    mov [rsp+\\I0],r11\n')
+       f.write('\n')
+@@ -771,11 +790,11 @@ for bits,primes,batchsize,batchbound in data:
+       for i in range(1,plimbs):
+         f.write('    mov r11,[rsp+\\I%d]\n' % i)
+         if i&1:
+-          f.write('    mulx rcx, rax, [rip + uintbig_p + %d]\n' % (8*i))
++          f.write('    mulx rcx, rax, [rip + .uintbig_p_local + %d]\n' % (8*i))
+           f.write('    adcx r11, rbx\n')
+           f.write('    adox r11, rax\n')
+         else:
+-          f.write('    mulx rbx, rax, [rip + uintbig_p + %d]\n' % (8*i))
++          f.write('    mulx rbx, rax, [rip + .uintbig_p_local + %d]\n' % (8*i))
+           f.write('    adcx r11, rcx\n')
+           f.write('    adox r11, rax\n')
+         f.write('    mov [rsp+\\I%d],r11\n' % i)
+@@ -856,16 +875,17 @@ for bits,primes,batchsize,batchbound in data:
+     f.write('fp_sq2:\n')
+     f.write('    /* TODO implement optimized Montgomery squaring */\n')
+     f.write('    mov rdx, rsi\n')
+-    f.write('    addq [fp_sq_count+rip],1\n')
++    f.write('    movq rax, [rip + fp_sq_count@GOTPCREL]\n')
++    f.write('    addq [rax], 1\n')
+     f.write('    jmp fp_mul3\n')
+ 
+   maybeupdate(fn)
+ 
+ 
+-cctest = '\t$(CC) -D\'NAMESPACEGENERIC(x)=highctidh_##x\' \\\n'
+-ccgeneric = '\t$(CC) -D\'NAMESPACEGENERIC(x)=highctidh_##x\' \\\n'
+-ccbits = '\t$(CC) -DBITS={0} -D\'NAMESPACEBITS(x)=highctidh_{0}_##x\' -D\'NAMESPACEGENERIC(x)=highctidh_##x\' \\\n'
+-scc = '\t$(SCC) -DBITS={0} -D\'NAMESPACEBITS(x)=highctidh_{0}_##x\' -D\'NAMESPACEGENERIC(x)=highctidh_##x\' \\\n'
++cctest = '\t$(CC) -fPIC -D\'NAMESPACEGENERIC(x)=highctidh_##x\' \\\n'
++ccgeneric = '\t$(CC) -fPIC -D\'NAMESPACEGENERIC(x)=highctidh_##x\' \\\n'
++ccbits = '\t$(CC) -fPIC -DBITS={0} -D\'NAMESPACEBITS(x)=highctidh_{0}_##x\' -D\'NAMESPACEGENERIC(x)=highctidh_##x\' \\\n'
++scc = '\t$(SCC) -fPIC -DBITS={0} -D\'NAMESPACEBITS(x)=highctidh_{0}_##x\' -D\'NAMESPACEGENERIC(x)=highctidh_##x\' \\\n'
+ 
+ def includes(fn):
+   result = [fn]
+@@ -883,8 +903,8 @@ databits = [bits for bits,primes,batchsize,batchbound in data]
+ fn = 'Makefile'
+ with open(fn+'.tmp','w') as f:
+   f.write('# DO NOT EDIT! generated by ./autogen\n\n')
+-  f.write('SCC=gcc\n')
+-  f.write('CC=clang -O3 -Os -march=native -mtune=native -std=gnu99 -pedantic -Wall -Wextra -Wno-language-extension-token -fwrapv -DTIMECOP -DGETRANDOM\n')
++  f.write('SCC=gcc -fPIC -fpie\n')
++  f.write('CC=clang -fpie -fPIC -O3 -Os -march=native -mtune=native -std=gnu99 -pedantic -Wall -Wextra -Wno-language-extension-token -fwrapv -DTIMECOP -DGETRANDOM\n')
+   f.write('\n')
+   f.write('default: generic %s\n' % ' '.join('%d'%bits for bits in databits))
+   f.write('\n')
+@@ -1137,4 +1157,33 @@ with open(fn+'.tmp','w') as f:
+   f.write(cctest)
+   f.write('\t\t-c crypto_classify.c\n')
+ 
++  f.write('\n\n# ----- shared library targets for libhighctidh_*.so:\n')
++
++  f.write('\n\nlibhighctidh_511.so: libhighctidh_511.a libhighctidh_base.a libhighctidh_untuned.a libtest.a\n')
++  f.write('\t\t$(SCC) -DBITS=511 -D\'NAMESPACEBITS(x)=highctidh_511_##x\' -D\'NAMESPACEGENERIC(x)=highctidh_##x\' -shared -o libhighctidh_511.so uintbig511.o fp511.o fp_inv511.o fp_sqrt511.o primes511.o poly511.o mont511.o elligator511.o skgen511.o validate511.o steps.o random.o crypto_classify.o crypto_declassify.o randombytes.o int32_sort.o  steps_untuned.o csidh511.o\n')
++
++  f.write('\n\ntest511-dyn: test511 libhighctidh_511.so\n')
++  f.write('\t\t$(CC) -DBITS=511 -D\'NAMESPACEBITS(x)=highctidh_511_##x\' -D\'NAMESPACEGENERIC(x)=highctidh_##x\' -o test511-dyn test.c -l highctidh_511 -L .\n')
++
++  f.write('\n\nlibhighctidh_512.so: libhighctidh_512.a libhighctidh_base.a libhighctidh_untuned.a libtest.a\n')
++  f.write('\t\t$(SCC) -DBITS=512 -D\'NAMESPACEBITS(x)=highctidh_512_##x\' -D\'NAMESPACEGENERIC(x)=highctidh_##x\' -shared -o libhighctidh_512.so uintbig512.o fp512.o fp_inv512.o fp_sqrt512.o primes512.o poly512.o mont512.o elligator512.o skgen512.o validate512.o steps.o random.o crypto_classify.o crypto_declassify.o randombytes.o int32_sort.o  steps_untuned.o csidh512.o\n')
++
++  f.write('\n\ntest512-dyn: test512 libhighctidh_512.so\n')
++  f.write('\t\t$(CC) -DBITS=512 -D\'NAMESPACEBITS(x)=highctidh_512_##x\' -D\'NAMESPACEGENERIC(x)=highctidh_##x\' -o test512-dyn test.c -l highctidh_512 -L .\n')
++
++  f.write('\n\nlibhighctidh_1024.so: libhighctidh_1024.a libhighctidh_base.a libhighctidh_untuned.a libtest.a\n')
++  f.write('\t\t$(SCC) -DBITS=1024 -D\'NAMESPACEBITS(x)=highctidh_1024_##x\' -D\'NAMESPACEGENERIC(x)=highctidh_##x\' -shared -o libhighctidh_1024.so uintbig1024.o fp1024.o fp_inv1024.o fp_sqrt1024.o primes1024.o poly1024.o mont1024.o elligator1024.o skgen1024.o validate1024.o steps.o random.o crypto_classify.o crypto_declassify.o randombytes.o int32_sort.o  steps_untuned.o csidh1024.o\n')
++
++  f.write('\n\ntest1024-dyn: test1024 libhighctidh_1024.so\n')
++  f.write('\t\t$(CC) -DBITS=1024 -D\'NAMESPACEBITS(x)=highctidh_1024_##x\' -D\'NAMESPACEGENERIC(x)=highctidh_##x\' -o test1024-dyn test.c -l highctidh_1024 -L .\n')
++
++  f.write('\n\nlibhighctidh_2048.so: libhighctidh_2048.a libhighctidh_base.a libhighctidh_untuned.a libtest.a\n')
++  f.write('\t\t$(SCC) -DBITS=2048 -D\'NAMESPACEBITS(x)=highctidh_2048_##x\' -D\'NAMESPACEGENERIC(x)=highctidh_##x\' -shared -o libhighctidh_2048.so uintbig2048.o fp2048.o fp_inv2048.o fp_sqrt2048.o primes2048.o poly2048.o mont2048.o elligator2048.o skgen2048.o validate2048.o steps.o random.o crypto_classify.o crypto_declassify.o randombytes.o int32_sort.o  steps_untuned.o csidh2048.o\n')
++
++  f.write('\n\ntest2048-dyn: test2048 libhighctidh_2048.so\n')
++  f.write('\t\t$(CC) -DBITS=2048 -D\'NAMESPACEBITS(x)=highctidh_2048_##x\' -D\'NAMESPACEGENERIC(x)=highctidh_##x\' -o test2048-dyn test.c -l highctidh_2048 -L .\n')
++
++  f.write('\n\nclean:\n')
++  f.write('\t\t-rm *.o *.a *.so\n')
++
+ maybeupdate(fn)
