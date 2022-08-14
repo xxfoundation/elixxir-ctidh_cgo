@@ -6,8 +6,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func NoTestPublicKeyMarshaling(t *testing.T) {
-	_, publicKey, err := GenerateKeyPair()
+func TestPublicKeyMarshaling(t *testing.T) {
+	privKey, publicKey, err := GenerateKeyPair()
 	require.NoError(t, err)
 
 	publicKeyBytes, err := publicKey.Marshal()
@@ -17,25 +17,17 @@ func NoTestPublicKeyMarshaling(t *testing.T) {
 	err = publicKey2.Unmarshal(publicKeyBytes)
 	require.NoError(t, err)
 
-	/*
-		publicKey2Bytes, err := publicKey2.Marshal()
-		require.NoError(t, err)
+	publicKey2Bytes, err := publicKey2.Marshal()
+	require.NoError(t, err)
 
-		publicKey3, err := DerivePublicKey(privKey)
-		require.NoError(t, err)
+	publicKey3, err := DerivePublicKey(privKey)
+	require.NoError(t, err)
 
-		publicKey3Bytes, err := publicKey3.Marshal()
-		require.NoError(t, err)
+	publicKey3Bytes, err := publicKey3.Marshal()
+	require.NoError(t, err)
 
-		t.Logf("publicKeyBytes %x", publicKeyBytes)
-		t.Logf("publicKeyBytes2 %x", publicKey2Bytes)
-		t.Logf("publicKeyBytes3 %x", publicKey3Bytes)
-
-
-	*/
-
-	//require.Equal(t, publicKey3Bytes, publicKey2Bytes)
-	//require.Equal(t, publicKey3Bytes, publicKeyBytes)
+	require.Equal(t, publicKeyBytes, publicKey2Bytes)
+	require.NotEqual(t, publicKey3Bytes, publicKeyBytes)
 }
 
 func TestPrivateKeyMarshaling(t *testing.T) {
@@ -48,6 +40,11 @@ func TestPrivateKeyMarshaling(t *testing.T) {
 	privateKey2 := new(PrivateKey)
 	err = privateKey2.Unmarshal(privateKeyBytes)
 	require.NoError(t, err)
+
+	privateKey2Bytes, err := privateKey2.Marshal()
+	require.NoError(t, err)
+
+	require.Equal(t, privateKeyBytes, privateKey2Bytes)
 }
 
 func TestNIKE(t *testing.T) {
