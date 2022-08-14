@@ -62,12 +62,16 @@ func TestVectors(t *testing.T) {
 	require.NoError(t, err)
 
 	bobSharedBytes, err := bobShared.Marshal()
-	//_, err = bobShared.Marshal()
 	require.NoError(t, err)
 
 	aliceSharedBytes, err := aliceShared.Marshal()
-	//_, err = aliceShared.Marshal()
 	require.NoError(t, err)
 
 	require.Equal(t, bobSharedBytes, aliceSharedBytes)
+
+	sharedSecretHex := "24081588d4f3232f788e4e65db4870a223942ad272722a70577c26533c93adcd798cd166f26bfbafa6d6e428bf502a98e753a5a17ba2669869b2082f50266932"
+	sharedSecretBytes, err := hex.DecodeString(sharedSecretHex)
+	require.NoError(t, err)
+
+	require.Equal(t, sharedSecretBytes, aliceSharedBytes)
 }
