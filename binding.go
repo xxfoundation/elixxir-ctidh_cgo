@@ -26,7 +26,7 @@ func (p *PublicKey) Marshal() ([]byte, error) {
 func (p *PublicKey) Unmarshal(data []byte) error {
 	key := C.CBytes(data)
 	defer C.free(key)
-	public_key := C.load_public_key((*C.char)(key))
+	public_key := *((*C.public_key)(key))
 	if !C.validate(&public_key) {
 		return PublicKeyValidationError
 	}
@@ -48,7 +48,7 @@ func (p *PrivateKey) Marshal() ([]byte, error) {
 func (p *PrivateKey) Unmarshal(data []byte) error {
 	key := C.CBytes(data)
 	defer C.free(key)
-	private_key := C.load_private_key((*C.char)(key))
+	private_key := *((*C.private_key)(key))
 	p.private_key = private_key
 	return nil
 }

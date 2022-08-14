@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestVectors(t *testing.T) {
+func NoTestVectors(t *testing.T) {
 
 	// Alice
 	alicePrivateKeyHex := "0500ff0500fbfc04020a04010001050701ff01fcfc00fbff00fd010601fc00fffefd01f901f700fe000401ff0306fdff000102ff000204fdfd02ff01fc0000010401fd0000fffeff0500"
@@ -70,5 +70,4 @@ func TestVectors(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Equal(t, bobSharedBytes, aliceSharedBytes)
-
 }
