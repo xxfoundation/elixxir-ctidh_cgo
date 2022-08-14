@@ -13,8 +13,8 @@ private_key load_private_key(char* raw_key) {
 
 public_key load_public_key(char* raw_key) {
   public_key pub_key;
-  for (int64_t i = 0;i < primes_num;++i) {
-
+  for (long i = 0; i < primes_num; ++i) {
+      pub_key.A.x.c[i] = (uint64_t)raw_key[i*8];
   }
   return pub_key;
 }
