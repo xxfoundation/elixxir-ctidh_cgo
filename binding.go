@@ -10,6 +10,8 @@ import (
 
 var base C.public_key
 
+var PublicKeyValidationError error = errors.New("public key validation failure")
+
 // PublicKey is a public CTIDH key.
 type PublicKey struct {
 	public_key C.public_key
@@ -25,6 +27,9 @@ func (p *PublicKey) Unmarshal(data []byte) error {
 	key := C.CBytes(data)
 	defer C.free(key)
 	public_key := C.load_public_key((*C.char)(key))
+	if !C.validate(&public_key) {
+		return PublicKeyValidationError
+	}
 	p.public_key = public_key
 	return nil
 }
