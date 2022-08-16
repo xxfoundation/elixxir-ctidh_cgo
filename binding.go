@@ -8,56 +8,57 @@ import (
 	"unsafe"
 )
 
-var base C.public_key
+// ErrPublicKeyValidation indicates a public key validation failure.
+var ErrPublicKeyValidation error = errors.New("CTIDH/cgo: public key validation failure")
 
-var PublicKeyValidationError error = errors.New("public key validation failure")
-var CSIDHError error = errors.New("CSIDH failure")
+// ErrCTIDH indicates a group action failure.
+var ErrCTIDH error = errors.New("CTIDH/cgo: group action failure")
 
 // PublicKey is a public CTIDH key.
 type PublicKey struct {
-	public_key C.public_key
+	publicKey C.public_key
 }
 
 // Marshal serializes the PublicKey.
 func (p *PublicKey) Marshal() ([]byte, error) {
-	return C.GoBytes(unsafe.Pointer(&p.public_key.A.x.c), C.int(C.UINTBIG_LIMBS*8)), nil
+	return C.GoBytes(unsafe.Pointer(&p.publicKey.A.x.c), C.int(C.UINTBIG_LIMBS*8)), nil
 }
 
 // Unmarshal loads a PublicKey from the given byte slice.
 func (p *PublicKey) Unmarshal(data []byte) error {
 	key := C.CBytes(data)
 	defer C.free(key)
-	public_key := *((*C.public_key)(key))
-	if !C.validate(&public_key) {
-		return PublicKeyValidationError
+	publicKey := *((*C.public_key)(key))
+	if !C.validate(&publicKey) {
+		return ErrPublicKeyValidation
 	}
-	p.public_key = public_key
+	p.publicKey = publicKey
 	return nil
 }
 
 // PrivateKey is a private CTIDH key.
 type PrivateKey struct {
-	private_key C.private_key
+	privateKey C.private_key
 }
 
 // Marshal serializes PrivateKey into a byte slice.
 func (p *PrivateKey) Marshal() ([]byte, error) {
-	return C.GoBytes(unsafe.Pointer(&p.private_key), C.primes_num), nil
+	return C.GoBytes(unsafe.Pointer(&p.privateKey), C.primes_num), nil
 }
 
 // Unmarshal loads a PrivateKey from the given byte slice.
 func (p *PrivateKey) Unmarshal(data []byte) error {
 	key := C.CBytes(data)
 	defer C.free(key)
-	private_key := *((*C.private_key)(key))
-	p.private_key = private_key
+	p.privateKey = *((*C.private_key)(key))
 	return nil
 }
 
 // DerivePublicKey derives a public key given a private key.
 func DerivePublicKey(privKey *PrivateKey) (*PublicKey, error) {
+	var base C.public_key
 	baseKey := new(PublicKey)
-	baseKey.public_key = base
+	baseKey.publicKey = base
 	pubKey, err := GroupAction(privKey, baseKey)
 	if err != nil {
 		return nil, err
@@ -69,7 +70,7 @@ func DerivePublicKey(privKey *PrivateKey) (*PublicKey, error) {
 // attempts to compute the public key.
 func GenerateKeyPair() (*PrivateKey, *PublicKey, error) {
 	privKey := new(PrivateKey)
-	C.csidh_private(&privKey.private_key)
+	C.csidh_private(&privKey.privateKey)
 	pubKey, err := DerivePublicKey(privKey)
 	if err != nil {
 		return nil, nil, err
@@ -81,9 +82,9 @@ func GenerateKeyPair() (*PrivateKey, *PublicKey, error) {
 // which for example can be used to compute a shared secret or public key.
 func GroupAction(privateKey *PrivateKey, publicKey *PublicKey) (*PublicKey, error) {
 	sharedKey := new(PublicKey)
-	ok := C.csidh(&sharedKey.public_key, &publicKey.public_key, &privateKey.private_key)
+	ok := C.csidh(&sharedKey.publicKey, &publicKey.publicKey, &privateKey.privateKey)
 	if !ok {
-		return nil, CSIDHError
+		return nil, ErrCTIDH
 	}
 	return sharedKey, nil
 }

@@ -34,7 +34,7 @@ Step 2
 Build the CTIDH C shared library:
 
 ```
-cd high-ctidh-20210523$
+cd high-ctidh-20210523
 patch -p1 < ../autogen-memoized.patch
 ./autogen
 make libhighctidh_512.so
