@@ -42,12 +42,12 @@ type PrivateKey struct {
 }
 
 // Marshal serializes PrivateKey into a byte slice.
-func (p *PrivateKey) Marshal() ([]byte, error) {
-	return C.GoBytes(unsafe.Pointer(&p.privateKey), C.primes_num), nil
+func (p *PrivateKey) Bytes() []byte {
+	return C.GoBytes(unsafe.Pointer(&p.privateKey), C.primes_num)
 }
 
 // Unmarshal loads a PrivateKey from the given byte slice.
-func (p *PrivateKey) Unmarshal(data []byte) error {
+func (p *PrivateKey) FromBytes(data []byte) error {
 	key := C.CBytes(data)
 	defer C.free(key)
 	p.privateKey = *((*C.private_key)(key))
@@ -89,5 +89,5 @@ func groupAction(privateKey *PrivateKey, publicKey *PublicKey) (*PublicKey, erro
 
 // DeriveSecret derives a shared secret.
 func DeriveSecret(privateKey *PrivateKey, publicKey *PublicKey) (*PublicKey, error) {
-	return groupAction()
+	return groupAction(privateKey, publicKey)
 }
