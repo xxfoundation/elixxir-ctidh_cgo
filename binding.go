@@ -19,13 +19,13 @@ type PublicKey struct {
 	publicKey C.public_key
 }
 
-// Marshal serializes the PublicKey.
-func (p *PublicKey) Marshal() ([]byte, error) {
-	return C.GoBytes(unsafe.Pointer(&p.publicKey.A.x.c), C.int(C.UINTBIG_LIMBS*8)), nil
+// Bytes returns the PublicKey as a byte slice.
+func (p *PublicKey) Bytes() []byte {
+	return C.GoBytes(unsafe.Pointer(&p.publicKey.A.x.c), C.int(C.UINTBIG_LIMBS*8))
 }
 
-// Unmarshal loads a PublicKey from the given byte slice.
-func (p *PublicKey) Unmarshal(data []byte) error {
+// FromBytes loads a PublicKey from the given byte slice.
+func (p *PublicKey) FromBytes(data []byte) error {
 	key := C.CBytes(data)
 	defer C.free(key)
 	publicKey := *((*C.public_key)(key))
@@ -59,7 +59,7 @@ func DerivePublicKey(privKey *PrivateKey) (*PublicKey, error) {
 	var base C.public_key
 	baseKey := new(PublicKey)
 	baseKey.publicKey = base
-	pubKey, err := GroupAction(privKey, baseKey)
+	pubKey, err := groupAction(privKey, baseKey)
 	if err != nil {
 		return nil, err
 	}
@@ -78,13 +78,16 @@ func GenerateKeyPair() (*PrivateKey, *PublicKey, error) {
 	return privKey, pubKey, nil
 }
 
-// GroupAction performs the cyclic group computation
-// which for example can be used to compute a shared secret or public key.
-func GroupAction(privateKey *PrivateKey, publicKey *PublicKey) (*PublicKey, error) {
+func groupAction(privateKey *PrivateKey, publicKey *PublicKey) (*PublicKey, error) {
 	sharedKey := new(PublicKey)
 	ok := C.csidh(&sharedKey.publicKey, &publicKey.publicKey, &privateKey.privateKey)
 	if !ok {
 		return nil, ErrCTIDH
 	}
 	return sharedKey, nil
+}
+
+// DeriveSecret derives a shared secret.
+func DeriveSecret(privateKey *PrivateKey, publicKey *PublicKey) (*PublicKey, error) {
+	return groupAction()
 }
