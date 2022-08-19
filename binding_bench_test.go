@@ -37,9 +37,7 @@ func BenchmarkPrivateKeySerializing(b *testing.B) {
 		privateKeyBytes := privateKey.Bytes()
 
 		privateKey2 := new(PrivateKey)
-		err = privateKey2.FromBytes(privateKeyBytes)
-		require.NoError(b, err)
-
+		privateKey2.FromBytes(privateKeyBytes)
 		privateKey2Bytes := privateKey2.Bytes()
 
 		require.Equal(b, privateKeyBytes, privateKey2Bytes)

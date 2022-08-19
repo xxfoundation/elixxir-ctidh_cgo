@@ -47,11 +47,10 @@ func (p *PrivateKey) Bytes() []byte {
 }
 
 // Unmarshal loads a PrivateKey from the given byte slice.
-func (p *PrivateKey) FromBytes(data []byte) error {
+func (p *PrivateKey) FromBytes(data []byte) {
 	key := C.CBytes(data)
 	defer C.free(key)
 	p.privateKey = *((*C.private_key)(key))
-	return nil
 }
 
 // DerivePublicKey derives a public key given a private key.

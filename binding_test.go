@@ -34,9 +34,7 @@ func TestPrivateKeyBytesing(t *testing.T) {
 	privateKeyBytes := privateKey.Bytes()
 
 	privateKey2 := new(PrivateKey)
-	err = privateKey2.FromBytes(privateKeyBytes)
-	require.NoError(t, err)
-
+	privateKey2.FromBytes(privateKeyBytes)
 	privateKey2Bytes := privateKey2.Bytes()
 
 	require.Equal(t, privateKeyBytes, privateKey2Bytes)
