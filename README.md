@@ -55,8 +55,11 @@ ${CTIDH_BITS}. Firstly, install the jinja2 cli tool:
 pip install jinja2-cli
 ```
 
-The build process doesn't lend itself to using `go generate` because
-of all the bash environment variables.
+Installing jinja2-cli might require you to add `~/.local/bin` to your path:
+
+```
+export PATH=$PATH:~/.local/bin
+```
 
 In order to run the unit tests or build a Go project against this
 library you'll have to set the CGO CFLAGS and LDFLAGS to indicate the
