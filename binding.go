@@ -41,12 +41,12 @@ type PrivateKey struct {
 	privateKey C.private_key
 }
 
-// Marshal serializes PrivateKey into a byte slice.
+// Bytes serializes PrivateKey into a byte slice.
 func (p *PrivateKey) Bytes() []byte {
 	return C.GoBytes(unsafe.Pointer(&p.privateKey), C.primes_num)
 }
 
-// Unmarshal loads a PrivateKey from the given byte slice.
+// FromBytes loads a PrivateKey from the given byte slice.
 func (p *PrivateKey) FromBytes(data []byte) {
 	key := C.CBytes(data)
 	defer C.free(key)
