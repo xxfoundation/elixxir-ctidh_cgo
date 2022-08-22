@@ -52,14 +52,11 @@ func BenchmarkNIKE(b *testing.B) {
 		bobPrivate, bobPublic, err := GenerateKeyPair()
 		require.NoError(b, err)
 
-		bobShared, err := DeriveSecret(bobPrivate, alicePublic)
+		bobSharedBytes, err := DeriveSecret(bobPrivate, alicePublic)
 		require.NoError(b, err)
 
-		aliceShared, err := DeriveSecret(alicePrivate, bobPublic)
+		aliceSharedBytes, err := DeriveSecret(alicePrivate, bobPublic)
 		require.NoError(b, err)
-
-		bobSharedBytes := bobShared.Bytes()
-		aliceSharedBytes := aliceShared.Bytes()
 
 		require.Equal(b, bobSharedBytes, aliceSharedBytes)
 	}

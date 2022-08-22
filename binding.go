@@ -87,6 +87,10 @@ func groupAction(privateKey *PrivateKey, publicKey *PublicKey) (*PublicKey, erro
 }
 
 // DeriveSecret derives a shared secret.
-func DeriveSecret(privateKey *PrivateKey, publicKey *PublicKey) (*PublicKey, error) {
-	return groupAction(privateKey, publicKey)
+func DeriveSecret(privateKey *PrivateKey, publicKey *PublicKey) ([]byte, error) {
+	sharedSecret, err := groupAction(privateKey, publicKey)
+	if err != nil {
+		return nil, err
+	}
+	return sharedSecret.Bytes(), nil
 }

@@ -47,14 +47,11 @@ func TestNIKE(t *testing.T) {
 	bobPrivate, bobPublic, err := GenerateKeyPair()
 	require.NoError(t, err)
 
-	bobShared, err := DeriveSecret(bobPrivate, alicePublic)
+	bobSharedBytes, err := DeriveSecret(bobPrivate, alicePublic)
 	require.NoError(t, err)
 
-	aliceShared, err := DeriveSecret(alicePrivate, bobPublic)
+	aliceSharedBytes, err := DeriveSecret(alicePrivate, bobPublic)
 	require.NoError(t, err)
-
-	bobSharedBytes := bobShared.Bytes()
-	aliceSharedBytes := aliceShared.Bytes()
 
 	require.Equal(t, bobSharedBytes, aliceSharedBytes)
 }
