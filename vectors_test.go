@@ -39,14 +39,11 @@ func Test512BitVectors(t *testing.T) {
 	require.NoError(t, err)
 
 	// NIKE
-	bobShared, err := DeriveSecret(bobPrivateKey, alicePublicKey)
+	bobSharedBytes, err := DeriveSecret(bobPrivateKey, alicePublicKey)
 	require.NoError(t, err)
 
-	aliceShared, err := DeriveSecret(alicePrivateKey, bobPublicKey)
+	aliceSharedBytes, err := DeriveSecret(alicePrivateKey, bobPublicKey)
 	require.NoError(t, err)
-
-	bobSharedBytes := bobShared.Bytes()
-	aliceSharedBytes := aliceShared.Bytes()
 	require.Equal(t, bobSharedBytes, aliceSharedBytes)
 
 	sharedSecretHex := "24081588d4f3232f788e4e65db4870a223942ad272722a70577c26533c93adcd798cd166f26bfbafa6d6e428bf502a98e753a5a17ba2669869b2082f50266932"
