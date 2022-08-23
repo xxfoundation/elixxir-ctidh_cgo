@@ -85,24 +85,23 @@ export CGO_LDFLAGS="-L${PWD}/high-ctidh-20210523 -Wl,-rpath,./high-ctidh-2021052
 go test -v
 ```
 
-Here's trying different public key sizes:
+benchmarks
+----------
+
+Benchmark the DeriveSecret function for each public key size:
 
 ```
-export CTIDH_BITS=1024
+VALID_BIT_SIZES=('511' '512' '1024' '2048')
+for bits in "${VALID_BIT_SIZES[@]}"
+do
+export CTIDH_BITS=$bits
 cp binding${CTIDH_BITS}.h binding.h
 export PWD=`pwd`
 export CGO_CFLAGS="-g -I${PWD}/high-ctidh-20210523 -DBITS=${CTIDH_BITS}"
 export CGO_LDFLAGS="-L${PWD}/high-ctidh-20210523 -Wl,-rpath,./high-ctidh-20210523 -lhighctidh_${CTIDH_BITS}"
-go test -v
-```
+go test -bench=DeriveSecret
+done
 
-```
-export CTIDH_BITS=2048
-cp binding${CTIDH_BITS}.h binding.h
-export PWD=`pwd`
-export CGO_CFLAGS="-g -I${PWD}/high-ctidh-20210523 -DBITS=${CTIDH_BITS}"
-export CGO_LDFLAGS="-L${PWD}/high-ctidh-20210523 -Wl,-rpath,./high-ctidh-20210523 -lhighctidh_${CTIDH_BITS}"
-go test -v
 ```
 
 
