@@ -11,6 +11,12 @@ import (
 // ErrPublicKeyValidation indicates a public key validation failure.
 var ErrPublicKeyValidation error = errors.New("CTIDH/cgo: public key validation failure")
 
+// ErrPublicKeySize indicates the raw data is not the correct size for a public key.
+var ErrPublicKeySize error = errors.New("CTIDH/cgo: raw public key data size is wrong")
+
+// ErrPrivateKeySize indicates the raw data is not the correct size for a private key.
+var ErrPrivateKeySize error = errors.New("CTIDH/cgo: raw private key data size is wrong")
+
 // ErrCTIDH indicates a group action failure.
 var ErrCTIDH error = errors.New("CTIDH/cgo: group action failure")
 
@@ -24,15 +30,30 @@ func (p *PublicKey) Bytes() []byte {
 	return C.GoBytes(unsafe.Pointer(&p.publicKey.A.x.c), C.int(C.UINTBIG_LIMBS*8))
 }
 
+func validateBitSize(bits int) {
+	switch bits {
+	case 511:
+	case 512:
+	case 1024:
+	case 2048:
+	default:
+		panic("CTIDH/cgo: BITS must be 511 or 512 or 1024 or 2048")
+	}
+}
+
 // FromBytes loads a PublicKey from the given byte slice.
 func (p *PublicKey) FromBytes(data []byte) error {
-	key := C.CBytes(data)
-	defer C.free(key)
-	publicKey := *((*C.public_key)(key))
-	if !C.validate(&publicKey) {
+	validateBitSize(C.BITS)
+
+	if len(data) != C.BITS/8 {
+		return ErrPublicKeySize
+	}
+
+	p.publicKey = *((*C.public_key)(unsafe.Pointer(&data[0])))
+	if !C.validate(&p.publicKey) {
 		return ErrPublicKeyValidation
 	}
-	p.publicKey = publicKey
+
 	return nil
 }
 
@@ -47,10 +68,13 @@ func (p *PrivateKey) Bytes() []byte {
 }
 
 // FromBytes loads a PrivateKey from the given byte slice.
-func (p *PrivateKey) FromBytes(data []byte) {
-	key := C.CBytes(data)
-	defer C.free(key)
-	p.privateKey = *((*C.private_key)(key))
+func (p *PrivateKey) FromBytes(data []byte) error {
+	if len(data) != C.primes_num {
+		return ErrPrivateKeySize
+	}
+
+	p.privateKey = *((*C.private_key)(unsafe.Pointer(&data[0])))
+	return nil
 }
 
 // DerivePublicKey derives a public key given a private key.
