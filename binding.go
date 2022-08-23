@@ -45,7 +45,11 @@ func validateBitSize(bits int) {
 func (p *PublicKey) FromBytes(data []byte) error {
 	validateBitSize(C.BITS)
 
-	if len(data) != C.BITS/8 {
+	if C.BITS == 511 {
+		if len(data) != 64 {
+			return ErrPublicKeySize
+		}
+	} else if len(data) != C.BITS/8 {
 		return ErrPublicKeySize
 	}
 

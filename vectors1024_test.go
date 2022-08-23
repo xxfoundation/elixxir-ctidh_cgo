@@ -52,4 +52,3 @@ func TestPython1024BitVectors(t *testing.T) {
 
 	require.Equal(t, sharedSecretBytes, aliceSharedBytes)
 }
-

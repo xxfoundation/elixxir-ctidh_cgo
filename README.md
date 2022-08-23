@@ -109,14 +109,19 @@ done
 test vectors
 ------------
 
-Currently, the CTIDH library doesn't come with any test vectors so I
-wrote one simple test with vectors for 512 bit public key size and so
-it requires the bits512 build tag in order to run:
+Test vectors are a work in progress.
 
 ```
-
-go test -v -tags=bits512 -run=Test512BitVectors
-
+VALID_BIT_SIZES=('511' '512' '1024' '2048')
+for bits in "${VALID_BIT_SIZES[@]}"
+do
+export CTIDH_BITS=$bits
+cp binding${CTIDH_BITS}.h binding.h
+export PWD=`pwd`
+export CGO_CFLAGS="-g -I${PWD}/high-ctidh-20210523 -DBITS=${CTIDH_BITS}"
+export CGO_LDFLAGS="-L${PWD}/high-ctidh-20210523 -Wl,-rpath,./high-ctidh-20210523 -lhighctidh_${CTIDH_BITS}"
+go test -v -tags=bits${CTIDH_BITS} -run=${CTIDH_BITS}BitVectors
+done
 ```
 
 License
