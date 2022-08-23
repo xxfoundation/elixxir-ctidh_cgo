@@ -1,4 +1,4 @@
-module git.xx.network/dstainton/ctidh_cgo
+module git.xx.network/elixxir/ctidh_cgo
 
 go 1.16
 
