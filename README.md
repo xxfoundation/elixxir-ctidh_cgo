@@ -46,19 +46,15 @@ cd ..
 Step 3
 ------
 
-Build your Go application. I've templatized binding.h with jinja2. All
-it does is replace a named token with the selected CTIDH public key
-bit size; below we refer to this with the bash environment variable
-${CTIDH_BITS}. Firstly, install the jinja2 cli tool:
+Build your Go application.
+
+I've created several header files one for each key size: binding511.h, binding512.h, binding1024.h and binding2048.h
+You'll have to copy one of these to `binding.h`. Below the bash examples
+do it like this:
 
 ```
-pip install jinja2-cli
-```
-
-Installing jinja2-cli might require you to add `~/.local/bin` to your path:
-
-```
-export PATH=$PATH:~/.local/bin
+export CTIDH_BITS=512
+cp binding${CTIDH_BITS}.h binding.h
 ```
 
 In order to run the unit tests or build a Go project against this
@@ -68,7 +64,7 @@ the LD_LIBRARY_PATH environment variable:
 
 ```
 export CTIDH_BITS=512
-jinja2 -D CTIDH_BITS=${CTIDH_BITS} binding.h.j2 -o binding.h
+cp binding${CTIDH_BITS}.h binding.h
 export PWD=`pwd`
 export CGO_CFLAGS="-g -I${PWD}/high-ctidh-20210523 -DBITS=${CTIDH_BITS}"
 export CGO_LDFLAGS="-L${PWD}/high-ctidh-20210523 -l:libhighctidh_${CTIDH_BITS}.so"
@@ -82,7 +78,7 @@ LD_LIBRARY_PATH:
 
 ```
 export CTIDH_BITS=512
-jinja2 -D CTIDH_BITS=${CTIDH_BITS} binding.h.j2 -o binding.h
+cp binding${CTIDH_BITS}.h binding.h
 export PWD=`pwd`
 export CGO_CFLAGS="-g -I${PWD}/high-ctidh-20210523 -DBITS=${CTIDH_BITS}"
 export CGO_LDFLAGS="-L${PWD}/high-ctidh-20210523 -Wl,-rpath,./high-ctidh-20210523 -lhighctidh_${CTIDH_BITS}"
@@ -93,7 +89,7 @@ Here's trying different public key sizes:
 
 ```
 export CTIDH_BITS=1024
-jinja2 -D CTIDH_BITS=${CTIDH_BITS} binding.h.j2 -o binding.h
+cp binding${CTIDH_BITS}.h binding.h
 export PWD=`pwd`
 export CGO_CFLAGS="-g -I${PWD}/high-ctidh-20210523 -DBITS=${CTIDH_BITS}"
 export CGO_LDFLAGS="-L${PWD}/high-ctidh-20210523 -Wl,-rpath,./high-ctidh-20210523 -lhighctidh_${CTIDH_BITS}"
@@ -102,7 +98,7 @@ go test -v
 
 ```
 export CTIDH_BITS=2048
-jinja2 -D CTIDH_BITS=${CTIDH_BITS} binding.h.j2 -o binding.h
+cp binding${CTIDH_BITS}.h binding.h
 export PWD=`pwd`
 export CGO_CFLAGS="-g -I${PWD}/high-ctidh-20210523 -DBITS=${CTIDH_BITS}"
 export CGO_LDFLAGS="-L${PWD}/high-ctidh-20210523 -Wl,-rpath,./high-ctidh-20210523 -lhighctidh_${CTIDH_BITS}"
