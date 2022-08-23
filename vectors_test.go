@@ -52,3 +52,47 @@ func Test512BitVectors(t *testing.T) {
 
 	require.Equal(t, sharedSecretBytes, aliceSharedBytes)
 }
+
+func TestPython512BitVectors(t *testing.T) {
+
+	// Alice
+	alicePrivateKeyHex := "fcfbfd01f6090104fe09ff0502040000060100fcfefc06ff04060000ff03fe010300010307ff01040201020006020000fcfefd01fe0000fdf9fdff040104000201fe0001fd020201fe00"
+	alicePrivateKeyBytes, err := hex.DecodeString(alicePrivateKeyHex)
+	require.NoError(t, err)
+	alicePrivateKey := new(PrivateKey)
+	alicePrivateKey.FromBytes(alicePrivateKeyBytes)
+
+	alicePublicKeyHex := "f0e3123870580f84f10e269a5150baaaf7058a6f0437cb8678c5ad6a0dddd3355c76435ae054a873e76bf5f8bc58ec29053d02162c7d3f309764443e2a3f0f38"
+	alicePublicKeyBytes, err := hex.DecodeString(alicePublicKeyHex)
+	alicePublicKey := new(PublicKey)
+	err = alicePublicKey.FromBytes(alicePublicKeyBytes)
+	require.NoError(t, err)
+
+	// Bob
+	bobPrivateKeyHex := "02f90009ff06ff03fb0701010501fffafdffff070204fdfefc02fe04fc00060302fefeff01f9020002fffb0000fe02ff00f6030003ff01010105fbfffd01fffe0302fc000101fc000101"
+	bobPrivateKeyBytes, err := hex.DecodeString(bobPrivateKeyHex)
+	require.NoError(t, err)
+	bobPrivateKey := new(PrivateKey)
+	bobPrivateKey.FromBytes(bobPrivateKeyBytes)
+
+	bobPublicKeyHex := "7369aaee2b543f17655fd57a78e03140b9a7fda3773651920c89fcd2aa9875dd633c3762f39fbda81961c70b0716974352ad5833564c6764ee082f17545b374d"
+	bobPublicKeyBytes, err := hex.DecodeString(bobPublicKeyHex)
+	bobPublicKey := new(PublicKey)
+	err = bobPublicKey.FromBytes(bobPublicKeyBytes)
+	require.NoError(t, err)
+
+	// NIKE
+	bobSharedBytes, err := DeriveSecret(bobPrivateKey, alicePublicKey)
+	require.NoError(t, err)
+
+	aliceSharedBytes, err := DeriveSecret(alicePrivateKey, bobPublicKey)
+	require.NoError(t, err)
+	require.Equal(t, bobSharedBytes, aliceSharedBytes)
+
+	sharedSecretHex := "0d84960ea3c52ad6264a53915757d1ff8733629914577151140ae28bd28325bc31151ae3a1447e0d68aae42abcc63dae249072a8e729678ab73fd333b32a7a3d"
+	sharedSecretBytes, err := hex.DecodeString(sharedSecretHex)
+	require.NoError(t, err)
+
+	require.Equal(t, sharedSecretBytes, aliceSharedBytes)
+}
+
