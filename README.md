@@ -85,6 +85,7 @@ export CGO_LDFLAGS="-L${PWD}/high-ctidh-20210523 -Wl,-rpath,./high-ctidh-2021052
 go test -v
 ```
 
+
 benchmarks
 ----------
 
@@ -104,6 +105,19 @@ done
 
 ```
 
+
+test vectors
+------------
+
+Currently, the CTIDH library doesn't come with any test vectors so I
+wrote one simple test with vectors for 512 bit public key size and so
+it requires the bits512 build tag in order to run:
+
+```
+
+go test -v -tags=bits512 -run=Test512BitVectors
+
+```
 
 License
 =======
