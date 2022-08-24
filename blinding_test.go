@@ -1,11 +1,8 @@
 package ctidh
 
 import (
-	"crypto/sha256"
-	"io"
+	"crypto/rand"
 	"testing"
-
-	"golang.org/x/crypto/hkdf"
 
 	"github.com/stretchr/testify/require"
 )
@@ -13,10 +10,8 @@ import (
 func TestSimpleBlindingOperation(t *testing.T) {
 	_, alicePublic := GenerateKeyPair()
 
-	hkdf := hkdf.New(sha256.New, alicePublic.Bytes(), []byte{}, []byte("yo whats up"))
-
 	blindingFactor := make([]byte, PrivateKeySize)
-	_, err := io.ReadFull(hkdf, blindingFactor)
+	_, err := rand.Read(blindingFactor)
 	require.NoError(t, err)
 
 	oldKey := alicePublic.Bytes()
