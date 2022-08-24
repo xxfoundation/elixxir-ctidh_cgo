@@ -11,13 +11,12 @@ import (
 )
 
 func TestBlindingOperation(t *testing.T) {
-	_, alicePublic, err := GenerateKeyPair()
-	require.NoError(t, err)
+	_, alicePublic := GenerateKeyPair()
 
 	hkdf := hkdf.New(sha256.New, alicePublic.Bytes(), []byte{}, []byte("yo whats up"))
 
 	blindingFactor := make([]byte, PrivateKeySize)
-	_, err = io.ReadFull(hkdf, blindingFactor)
+	_, err := io.ReadFull(hkdf, blindingFactor)
 	require.NoError(t, err)
 
 	oldKey := alicePublic.Bytes()

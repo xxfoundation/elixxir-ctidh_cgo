@@ -38,11 +38,8 @@ func Test511BitVectors(t *testing.T) {
 	require.NoError(t, err)
 
 	// NIKE
-	bobSharedBytes, err := DeriveSecret(bobPrivateKey, alicePublicKey)
-	require.NoError(t, err)
-
-	aliceSharedBytes, err := DeriveSecret(alicePrivateKey, bobPublicKey)
-	require.NoError(t, err)
+	bobSharedBytes := DeriveSecret(bobPrivateKey, alicePublicKey)
+	aliceSharedBytes := DeriveSecret(alicePrivateKey, bobPublicKey)
 	require.Equal(t, bobSharedBytes, aliceSharedBytes)
 
 	sharedSecretHex := "74cc3560ed96ca88ad111f2feb5002240bc3a389c1b768eb588e4c4432a9ed748a5341b68618ed49bb81b3554fb6a5bc41289513c5321faa9b8230611f50f311"
@@ -81,11 +78,8 @@ func TestPython511BitVectors(t *testing.T) {
 	require.NoError(t, err)
 
 	// NIKE
-	bobSharedBytes, err := DeriveSecret(bobPrivateKey, alicePublicKey)
-	require.NoError(t, err)
-
-	aliceSharedBytes, err := DeriveSecret(alicePrivateKey, bobPublicKey)
-	require.NoError(t, err)
+	bobSharedBytes := DeriveSecret(bobPrivateKey, alicePublicKey)
+	aliceSharedBytes := DeriveSecret(alicePrivateKey, bobPublicKey)
 	require.Equal(t, bobSharedBytes, aliceSharedBytes)
 
 	sharedSecretHex := "5ecc8e5159cdb3bfac9281e183d9b3cbf2e289c28dee69f99b2fd840f141686fb133a3a40360a4e6056230a649be57b4e045b4c28c5558f80f57f85b43bbaf33"

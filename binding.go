@@ -77,10 +77,7 @@ func (p *PublicKey) Blind(data []byte) error {
 		return err
 	}
 
-	pubKey, err := groupAction(privKey, p)
-	if err != nil {
-		return err
-	}
+	pubKey := groupAction(privKey, p)
 	p.publicKey = pubKey.publicKey
 
 	return nil
@@ -116,45 +113,34 @@ func (p *PrivateKey) FromBytes(data []byte) error {
 }
 
 // DerivePublicKey derives a public key given a private key.
-func DerivePublicKey(privKey *PrivateKey) (*PublicKey, error) {
+func DerivePublicKey(privKey *PrivateKey) *PublicKey {
 	var base C.public_key
 	baseKey := new(PublicKey)
 	baseKey.publicKey = base
-	pubKey, err := groupAction(privKey, baseKey)
-	if err != nil {
-		return nil, err
-	}
-	return pubKey, nil
+	return groupAction(privKey, baseKey)
 }
 
 // GenerateKeyPair generates a new private and then
 // attempts to compute the public key.
-func GenerateKeyPair() (*PrivateKey, *PublicKey, error) {
+func GenerateKeyPair() (*PrivateKey, *PublicKey) {
 	privKey := new(PrivateKey)
 	C.csidh_private(&privKey.privateKey)
-	pubKey, err := DerivePublicKey(privKey)
-	if err != nil {
-		return nil, nil, err
-	}
-	return privKey, pubKey, nil
+	return privKey, DerivePublicKey(privKey)
 }
 
-func groupAction(privateKey *PrivateKey, publicKey *PublicKey) (*PublicKey, error) {
+func groupAction(privateKey *PrivateKey, publicKey *PublicKey) *PublicKey {
 	sharedKey := new(PublicKey)
 	ok := C.csidh(&sharedKey.publicKey, &publicKey.publicKey, &privateKey.privateKey)
 	if !ok {
-		return nil, ErrCTIDH
+		panic(ErrCTIDH)
 	}
-	return sharedKey, nil
+	return sharedKey
 }
 
 // DeriveSecret derives a shared secret.
-func DeriveSecret(privateKey *PrivateKey, publicKey *PublicKey) ([]byte, error) {
-	sharedSecret, err := groupAction(privateKey, publicKey)
-	if err != nil {
-		return nil, err
-	}
-	return sharedSecret.Bytes(), nil
+func DeriveSecret(privateKey *PrivateKey, publicKey *PublicKey) []byte {
+	sharedSecret := groupAction(privateKey, publicKey)
+	return sharedSecret.Bytes()
 }
 
 // Blind performs the blinding operation against the
@@ -165,23 +151,23 @@ func DeriveSecret(privateKey *PrivateKey, publicKey *PublicKey) ([]byte, error) 
 // * blindingFactor must be the size of a private key.
 //
 // See also PublicKey's Blind method.
-func Blind(publicKeyBytes, blindingFactor []byte) []byte {
+func Blind(publicKeyBytes, blindingFactor []byte) ([]byte, error) {
 	if len(publicKeyBytes) != PublicKeySize {
-		panic(ErrBlindDataSizeInvalid)
+		return nil, ErrBlindDataSizeInvalid
 	}
 
 	if len(blindingFactor) != PrivateKeySize {
-		panic(ErrBlindDataSizeInvalid)
+		return nil, ErrBlindDataSizeInvalid
 	}
 
 	pubKey := new(PublicKey)
 	err := pubKey.FromBytes(publicKeyBytes)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	pubKey.Blind(blindingFactor)
-	return pubKey.Bytes()
+	return pubKey.Bytes(), nil
 }
 
 func validateBitSize(bits int) {

@@ -8,20 +8,16 @@ import (
 
 func BenchmarkPublicKeySerializing(b *testing.B) {
 	for n := 0; n < b.N; n++ {
-		privKey, publicKey, err := GenerateKeyPair()
-		require.NoError(b, err)
+		privKey, publicKey := GenerateKeyPair()
 
 		publicKeyBytes := publicKey.Bytes()
 
 		publicKey2 := new(PublicKey)
-		err = publicKey2.FromBytes(publicKeyBytes)
+		err := publicKey2.FromBytes(publicKeyBytes)
 		require.NoError(b, err)
 
 		publicKey2Bytes := publicKey2.Bytes()
-
-		publicKey3, err := DerivePublicKey(privKey)
-		require.NoError(b, err)
-
+		publicKey3 := DerivePublicKey(privKey)
 		publicKey3Bytes := publicKey3.Bytes()
 
 		require.Equal(b, publicKeyBytes, publicKey2Bytes)
@@ -31,9 +27,7 @@ func BenchmarkPublicKeySerializing(b *testing.B) {
 
 func BenchmarkPrivateKeySerializing(b *testing.B) {
 	for n := 0; n < b.N; n++ {
-		privateKey, _, err := GenerateKeyPair()
-		require.NoError(b, err)
-
+		privateKey, _ := GenerateKeyPair()
 		privateKeyBytes := privateKey.Bytes()
 
 		privateKey2 := new(PrivateKey)
@@ -46,37 +40,25 @@ func BenchmarkPrivateKeySerializing(b *testing.B) {
 
 func BenchmarkNIKE(b *testing.B) {
 	for n := 0; n < b.N; n++ {
-		alicePrivate, alicePublic, err := GenerateKeyPair()
-		require.NoError(b, err)
+		alicePrivate, alicePublic := GenerateKeyPair()
+		bobPrivate, bobPublic := GenerateKeyPair()
 
-		bobPrivate, bobPublic, err := GenerateKeyPair()
-		require.NoError(b, err)
-
-		bobSharedBytes, err := DeriveSecret(bobPrivate, alicePublic)
-		require.NoError(b, err)
-
-		aliceSharedBytes, err := DeriveSecret(alicePrivate, bobPublic)
-		require.NoError(b, err)
+		bobSharedBytes := DeriveSecret(bobPrivate, alicePublic)
+		aliceSharedBytes := DeriveSecret(alicePrivate, bobPublic)
 
 		require.Equal(b, bobSharedBytes, aliceSharedBytes)
 	}
 }
 
 func BenchmarkDeriveSecret(b *testing.B) {
-	alicePrivate, alicePublic, err := GenerateKeyPair()
-	require.NoError(b, err)
-
-	bobPrivate, bobPublic, err := GenerateKeyPair()
-	require.NoError(b, err)
+	alicePrivate, alicePublic := GenerateKeyPair()
+	bobPrivate, bobPublic := GenerateKeyPair()
 
 	var aliceSharedBytes []byte
 	for n := 0; n < b.N; n++ {
-		aliceSharedBytes, err = DeriveSecret(alicePrivate, bobPublic)
-		require.NoError(b, err)
+		aliceSharedBytes = DeriveSecret(alicePrivate, bobPublic)
 	}
 
-	bobSharedBytes, err := DeriveSecret(bobPrivate, alicePublic)
-	require.NoError(b, err)
-
+	bobSharedBytes := DeriveSecret(bobPrivate, alicePublic)
 	require.Equal(b, bobSharedBytes, aliceSharedBytes)
 }

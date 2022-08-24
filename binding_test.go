@@ -8,8 +8,7 @@ import (
 
 func TestPublicKeyReset(t *testing.T) {
 	zeros := make([]byte, PublicKeySize)
-	_, publicKey, err := GenerateKeyPair()
-	require.NoError(t, err)
+	_, publicKey := GenerateKeyPair()
 	require.NotEqual(t, publicKey.Bytes(), zeros)
 
 	publicKey.Reset()
@@ -18,8 +17,7 @@ func TestPublicKeyReset(t *testing.T) {
 
 func TestPrivateKeyReset(t *testing.T) {
 	zeros := make([]byte, PrivateKeySize)
-	privateKey, _, err := GenerateKeyPair()
-	require.NoError(t, err)
+	privateKey, _ := GenerateKeyPair()
 	require.NotEqual(t, privateKey.Bytes(), zeros)
 
 	privateKey.Reset()
@@ -27,20 +25,16 @@ func TestPrivateKeyReset(t *testing.T) {
 }
 
 func TestPublicKeyMarshaling(t *testing.T) {
-	privKey, publicKey, err := GenerateKeyPair()
-	require.NoError(t, err)
-
+	privKey, publicKey := GenerateKeyPair()
 	publicKeyBytes := publicKey.Bytes()
 
 	publicKey2 := new(PublicKey)
-	err = publicKey2.FromBytes(publicKeyBytes)
+	err := publicKey2.FromBytes(publicKeyBytes)
 	require.NoError(t, err)
 
 	publicKey2Bytes := publicKey2.Bytes()
 
-	publicKey3, err := DerivePublicKey(privKey)
-	require.NoError(t, err)
-
+	publicKey3 := DerivePublicKey(privKey)
 	publicKey3Bytes := publicKey3.Bytes()
 
 	require.Equal(t, publicKeyBytes, publicKey2Bytes)
@@ -48,9 +42,7 @@ func TestPublicKeyMarshaling(t *testing.T) {
 }
 
 func TestPrivateKeyBytesing(t *testing.T) {
-	privateKey, _, err := GenerateKeyPair()
-	require.NoError(t, err)
-
+	privateKey, _ := GenerateKeyPair()
 	privateKeyBytes := privateKey.Bytes()
 
 	privateKey2 := new(PrivateKey)
@@ -61,17 +53,9 @@ func TestPrivateKeyBytesing(t *testing.T) {
 }
 
 func TestNIKE(t *testing.T) {
-	alicePrivate, alicePublic, err := GenerateKeyPair()
-	require.NoError(t, err)
-
-	bobPrivate, bobPublic, err := GenerateKeyPair()
-	require.NoError(t, err)
-
-	bobSharedBytes, err := DeriveSecret(bobPrivate, alicePublic)
-	require.NoError(t, err)
-
-	aliceSharedBytes, err := DeriveSecret(alicePrivate, bobPublic)
-	require.NoError(t, err)
-
+	alicePrivate, alicePublic := GenerateKeyPair()
+	bobPrivate, bobPublic := GenerateKeyPair()
+	bobSharedBytes := DeriveSecret(bobPrivate, alicePublic)
+	aliceSharedBytes := DeriveSecret(alicePrivate, bobPublic)
 	require.Equal(t, bobSharedBytes, aliceSharedBytes)
 }
