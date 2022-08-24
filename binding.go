@@ -36,6 +36,15 @@ type PublicKey struct {
 	publicKey C.public_key
 }
 
+// Reset resets the PublicKey to all zeros.
+func (p *PublicKey) Reset() {
+	zeros := make([]byte, PublicKeySize)
+	err := p.FromBytes(zeros)
+	if err != nil {
+		panic(err)
+	}
+}
+
 // Bytes returns the PublicKey as a byte slice.
 func (p *PublicKey) Bytes() []byte {
 	return C.GoBytes(unsafe.Pointer(&p.publicKey.A.x.c), C.int(C.UINTBIG_LIMBS*8))
@@ -80,6 +89,15 @@ func (p *PublicKey) Blind(data []byte) error {
 // PrivateKey is a private CTIDH key.
 type PrivateKey struct {
 	privateKey C.private_key
+}
+
+// Reset resets the PrivateKey to all zeros.
+func (p *PrivateKey) Reset() {
+	zeros := make([]byte, PrivateKeySize)
+	err := p.FromBytes(zeros)
+	if err != nil {
+		panic(err)
+	}
 }
 
 // Bytes serializes PrivateKey into a byte slice.
@@ -152,12 +170,15 @@ func Blind(publicKeyBytes, blindingFactor []byte) []byte {
 		panic(ErrBlindDataSizeInvalid)
 	}
 
-	if len(privateKeyBytes) != PrivateKeySize {
+	if len(blindingFactor) != PrivateKeySize {
 		panic(ErrBlindDataSizeInvalid)
 	}
 
 	pubKey := new(PublicKey)
-	err = pubKey.FromBytes(publicKeyBytes)
+	err := pubKey.FromBytes(publicKeyBytes)
+	if err != nil {
+		panic(err)
+	}
 
 	pubKey.Blind(blindingFactor)
 	return pubKey.Bytes()

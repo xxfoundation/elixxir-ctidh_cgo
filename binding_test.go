@@ -6,6 +6,26 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestPublicKeyReset(t *testing.T) {
+	zeros := make([]byte, PublicKeySize)
+	_, publicKey, err := GenerateKeyPair()
+	require.NoError(t, err)
+	require.NotEqual(t, publicKey.Bytes(), zeros)
+
+	publicKey.Reset()
+	require.Equal(t, publicKey.Bytes(), zeros)
+}
+
+func TestPrivateKeyReset(t *testing.T) {
+	zeros := make([]byte, PrivateKeySize)
+	privateKey, _, err := GenerateKeyPair()
+	require.NoError(t, err)
+	require.NotEqual(t, privateKey.Bytes(), zeros)
+
+	privateKey.Reset()
+	require.Equal(t, privateKey.Bytes(), zeros)
+}
+
 func TestPublicKeyMarshaling(t *testing.T) {
 	privKey, publicKey, err := GenerateKeyPair()
 	require.NoError(t, err)
