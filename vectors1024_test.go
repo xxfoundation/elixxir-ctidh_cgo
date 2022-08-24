@@ -10,6 +10,27 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func Test1024BitVectorBlindingOperation(t *testing.T) {
+	publicKeyHex := "859070e07094657ae90acfa5e03c0342cb1909bf73cc1d0992ef48f533444bdc334846872333cbf17b0b3a763f64b4d5435c91742269d6dfcfe5347473b28f881045a55f3e10a7a7dd5a7192013a932d29703a1236eb1964563a9892ab19fffa3590a0f0a2e02a2205baf6af83d192822f24516fb311506f4cc18687a18c1e0c"
+	publicKeyBytes, err := hex.DecodeString(publicKeyHex)
+	require.NoError(t, err)
+	publicKey := new(PublicKey)
+	err = publicKey.FromBytes(publicKeyBytes)
+	require.NoError(t, err)
+
+	blindingFactorHex := "82b843e2e941649c8e25aafde8e088e2c3406f8a1cd5803566e9204c2178bf68e7fa0febcc721ef527d514c4a79d29d549f59c876a69b18d3b7112f2b2b2b68b6acb0037a60c00981c7f6edfbaeccba1dc54df5dd85c96256b9649f3df3676dba7578163075b4fff7012c2fadb9bd03b3b9488b5577bab3918d1899b3cba0ff5b046"
+	blindingFactor, err := hex.DecodeString(blindingFactorHex)
+	require.NoError(t, err)
+
+	publicKey.Blind(blindingFactor)
+
+	blindingOutputHex := "b7f1fb4cba440e61d516d4cdb6a8b542c057b76eb4b277e0114a544c943756721ee2d09136b0ce97eb099961a6b383820cf7aebec2217b6f7cb7169aec7d00788b5bf549e274a743d496258b99f3cd36d176d253cc858719f0db4027959d2c8fd8f731c5101cba9198dabe11ebf3f67191bd8210b5a5fd9387ff5892d2565200"
+	blindingOutputBytes, err := hex.DecodeString(blindingOutputHex)
+	require.NoError(t, err)
+
+	require.Equal(t, blindingOutputBytes, publicKey.Bytes())
+}
+
 func Test1024BitVectors(t *testing.T) {
 	// Alice
 	alicePrivateKeyHex := "fe0001010000fe0100fe00ff00fc0300ffffff0000ff0100000000ff01010200000201fe01000100ff0000fdff010001ffffff03fd0000000000feff000101ff000401000100000100040000010001ff00000001000100000101ffffff010001ff00ff00ffff0000fe000100000100ff0000000002ff0000fe0000010000ff000000"

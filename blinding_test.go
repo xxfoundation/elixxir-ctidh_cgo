@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestBlindingOperation(t *testing.T) {
+func TestSimpleBlindingOperation(t *testing.T) {
 	_, alicePublic := GenerateKeyPair()
 
 	hkdf := hkdf.New(sha256.New, alicePublic.Bytes(), []byte{}, []byte("yo whats up"))

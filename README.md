@@ -120,7 +120,7 @@ cp binding${CTIDH_BITS}.h binding.h
 export PWD=`pwd`
 export CGO_CFLAGS="-g -I${PWD}/high-ctidh-20210523 -DBITS=${CTIDH_BITS}"
 export CGO_LDFLAGS="-L${PWD}/high-ctidh-20210523 -Wl,-rpath,./high-ctidh-20210523 -lhighctidh_${CTIDH_BITS}"
-go test -v -tags=bits${CTIDH_BITS} -run=${CTIDH_BITS}BitVectors
+go test -v -tags=bits${CTIDH_BITS} -run=${CTIDH_BITS}
 done
 ```
 
