@@ -8,17 +8,28 @@ import (
 	"unsafe"
 )
 
-// ErrPublicKeyValidation indicates a public key validation failure.
-var ErrPublicKeyValidation error = errors.New("CTIDH/cgo: public key validation failure")
+var (
+	// PublicKeySize is the size in bytes of the public key.
+	PublicKeySize int
 
-// ErrPublicKeySize indicates the raw data is not the correct size for a public key.
-var ErrPublicKeySize error = errors.New("CTIDH/cgo: raw public key data size is wrong")
+	// PrivateKeySize is the size in bytes of the private key.
+	PrivateKeySize int
 
-// ErrPrivateKeySize indicates the raw data is not the correct size for a private key.
-var ErrPrivateKeySize error = errors.New("CTIDH/cgo: raw private key data size is wrong")
+	// ErrBlindDataSizeInvalid indicates that the blinding data size was invalid.
+	ErrBlindDataSizeInvalid error = errors.New("CTIDH/cgo: blinding data size invalid")
 
-// ErrCTIDH indicates a group action failure.
-var ErrCTIDH error = errors.New("CTIDH/cgo: group action failure")
+	// ErrPublicKeyValidation indicates a public key validation failure.
+	ErrPublicKeyValidation error = errors.New("CTIDH/cgo: public key validation failure")
+
+	// ErrPublicKeySize indicates the raw data is not the correct size for a public key.
+	ErrPublicKeySize error = errors.New("CTIDH/cgo: raw public key data size is wrong")
+
+	// ErrPrivateKeySize indicates the raw data is not the correct size for a private key.
+	ErrPrivateKeySize error = errors.New("CTIDH/cgo: raw private key data size is wrong")
+
+	// ErrCTIDH indicates a group action failure.
+	ErrCTIDH error = errors.New("CTIDH/cgo: group action failure")
+)
 
 // PublicKey is a public CTIDH key.
 type PublicKey struct {
@@ -30,26 +41,9 @@ func (p *PublicKey) Bytes() []byte {
 	return C.GoBytes(unsafe.Pointer(&p.publicKey.A.x.c), C.int(C.UINTBIG_LIMBS*8))
 }
 
-func validateBitSize(bits int) {
-	switch bits {
-	case 511:
-	case 512:
-	case 1024:
-	case 2048:
-	default:
-		panic("CTIDH/cgo: BITS must be 511 or 512 or 1024 or 2048")
-	}
-}
-
 // FromBytes loads a PublicKey from the given byte slice.
 func (p *PublicKey) FromBytes(data []byte) error {
-	validateBitSize(C.BITS)
-
-	if C.BITS == 511 {
-		if len(data) != 64 {
-			return ErrPublicKeySize
-		}
-	} else if len(data) != C.BITS/8 {
+	if len(data) != PublicKeySize {
 		return ErrPublicKeySize
 	}
 
@@ -57,6 +51,28 @@ func (p *PublicKey) FromBytes(data []byte) error {
 	if !C.validate(&p.publicKey) {
 		return ErrPublicKeyValidation
 	}
+
+	return nil
+}
+
+// Blind performs a blinding operation
+// and mutates the public key.
+func (p *PublicKey) Blind(data []byte) error {
+	if len(data) != PrivateKeySize {
+		return ErrBlindDataSizeInvalid
+	}
+
+	privKey := new(PrivateKey)
+	err := privKey.FromBytes(data)
+	if err != nil {
+		return err
+	}
+
+	pubKey, err := groupAction(privKey, p)
+	if err != nil {
+		return err
+	}
+	p.publicKey = pubKey.publicKey
 
 	return nil
 }
@@ -73,7 +89,7 @@ func (p *PrivateKey) Bytes() []byte {
 
 // FromBytes loads a PrivateKey from the given byte slice.
 func (p *PrivateKey) FromBytes(data []byte) error {
-	if len(data) != C.primes_num {
+	if len(data) != PrivateKeySize {
 		return ErrPrivateKeySize
 	}
 
@@ -121,4 +137,54 @@ func DeriveSecret(privateKey *PrivateKey, publicKey *PublicKey) ([]byte, error) 
 		return nil, err
 	}
 	return sharedSecret.Bytes(), nil
+}
+
+// Blind performs the blinding operation against the
+// two byte slices which must be the correct lengths:
+//
+// * publicKeyBytes must be the size of a public key.
+//
+// * blindingFactor must be the size of a private key.
+//
+// See also PublicKey's Blind method.
+func Blind(publicKeyBytes, blindingFactor []byte) []byte {
+	if len(publicKeyBytes) != PublicKeySize {
+		panic(ErrBlindDataSizeInvalid)
+	}
+
+	if len(privateKeyBytes) != PrivateKeySize {
+		panic(ErrBlindDataSizeInvalid)
+	}
+
+	pubKey := new(PublicKey)
+	err = pubKey.FromBytes(publicKeyBytes)
+
+	pubKey.Blind(blindingFactor)
+	return pubKey.Bytes()
+}
+
+func validateBitSize(bits int) {
+	switch bits {
+	case 511:
+	case 512:
+	case 1024:
+	case 2048:
+	default:
+		panic("CTIDH/cgo: BITS must be 511 or 512 or 1024 or 2048")
+	}
+}
+
+func init() {
+	validateBitSize(C.BITS)
+	PrivateKeySize = C.primes_num
+	switch C.BITS {
+	case 511:
+		PublicKeySize = 64
+	case 512:
+		PublicKeySize = 64
+	case 1024:
+		PublicKeySize = 128
+	case 2048:
+		PublicKeySize = 256
+	}
 }
