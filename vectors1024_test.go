@@ -10,6 +10,48 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func Test1024BitVectors(t *testing.T) {
+	// Alice
+	alicePrivateKeyHex := "fe0001010000fe0100fe00ff00fc0300ffffff0000ff0100000000ff01010200000201fe01000100ff0000fdff010001ffffff03fd0000000000feff000101ff000401000100000100040000010001ff00000001000100000101ffffff010001ff00ff00ffff0000fe000100000100ff0000000002ff0000fe0000010000ff000000"
+	alicePrivateKeyBytes, err := hex.DecodeString(alicePrivateKeyHex)
+	require.NoError(t, err)
+	alicePrivateKey := new(PrivateKey)
+	alicePrivateKey.FromBytes(alicePrivateKeyBytes)
+
+	alicePublicKeyHex := "b962dadf244d6239ab74d808b0a88b2078b549bb03fab005ef6a97c1ee448bdc5a37892aaddf762e0157de5670320e8007398fb3eeab00a09fcbfe3caffb1fcebd03c38144e76b5d1dcd623871dbc6fe13470a23901dbadac77626fd05f891f18416a94123f9333ef1bdfb7570fa248f2567e33a8661c1411c42963b93e7a506"
+	alicePublicKeyBytes, err := hex.DecodeString(alicePublicKeyHex)
+	alicePublicKey := new(PublicKey)
+	err = alicePublicKey.FromBytes(alicePublicKeyBytes)
+	require.NoError(t, err)
+
+	// Bob
+	bobPrivateKeyHex := "ffff01fe0000ff000102010103000000ff02000102fe0000000100fffefeff00000000fd01fe00fefd0001000000fc00fe0000fe000102000100000002feff0001ff0001010100ff01ffff0000010102000000020100010003fffd0000fe000000ff00ff01000001fd0001ff0000000001010000ff0100ffff010100ff000000ff00"
+	bobPrivateKeyBytes, err := hex.DecodeString(bobPrivateKeyHex)
+	require.NoError(t, err)
+	bobPrivateKey := new(PrivateKey)
+	bobPrivateKey.FromBytes(bobPrivateKeyBytes)
+
+	bobPublicKeyHex := "e859133b1bb959a4f17135cd337477141f81684317b30a7f14bad81a867df388477c2bf7a7af738618b568f323b91762f2282706875341b9343a3cd0450073783a91fc71edca8c8b30f9ec6379137c91ce33dcae9dc3c7fd1a951925e299bafdbff6a29dcdb9ae1207f7fb986b6b1087bf05b79c542dca25993c5a43ef7dc105"
+	bobPublicKeyBytes, err := hex.DecodeString(bobPublicKeyHex)
+	bobPublicKey := new(PublicKey)
+	err = bobPublicKey.FromBytes(bobPublicKeyBytes)
+	require.NoError(t, err)
+
+	// NIKE
+	bobSharedBytes, err := DeriveSecret(bobPrivateKey, alicePublicKey)
+	require.NoError(t, err)
+
+	aliceSharedBytes, err := DeriveSecret(alicePrivateKey, bobPublicKey)
+	require.NoError(t, err)
+	require.Equal(t, bobSharedBytes, aliceSharedBytes)
+
+	sharedSecretHex := "411abafeca991f77b6f9263721ca3e2898031871e18d91b61c33c8664a9fc3fccf331729a9dd60465687e53c3d7649abfd4a3e32f4ea86e351535c9b281a76a74fa6b057d94403e55941de7e91432e2e85cc8f5b13fa28314a8dc8f09360e44c802bfc8b036451b26bc54200e133dde3976aa1f4885277a7692da9d38c09e301"
+	sharedSecretBytes, err := hex.DecodeString(sharedSecretHex)
+	require.NoError(t, err)
+
+	require.Equal(t, sharedSecretBytes, aliceSharedBytes)
+}
+
 func TestPython1024BitVectors(t *testing.T) {
 
 	// Alice

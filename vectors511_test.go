@@ -10,6 +10,47 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func Test511BitVectors(t *testing.T) {
+	// Alice
+	alicePrivateKeyHex := "fd020202fb01ff020001fbffff0003020502ff020500fefefe02010501fb01fcfffc03010001000101fb000400fe000100fc030100000301fcfe0001ffff01ff00fe00ff000300ffff00"
+	alicePrivateKeyBytes, err := hex.DecodeString(alicePrivateKeyHex)
+	require.NoError(t, err)
+	alicePrivateKey := new(PrivateKey)
+	alicePrivateKey.FromBytes(alicePrivateKeyBytes)
+
+	alicePublicKeyHex := "17f085e2f4ada10a3f0b15b0e3cff0e13ee915d3915dd779ae22c4664f067966c1ec2fae5fafb2af06222b8bdc3b7a649114ac5cc0dbd13cf35e4b5e61a74815"
+	alicePublicKeyBytes, err := hex.DecodeString(alicePublicKeyHex)
+	alicePublicKey := new(PublicKey)
+	err = alicePublicKey.FromBytes(alicePublicKeyBytes)
+	require.NoError(t, err)
+
+	// Bob
+	bobPrivateKeyHex := "02ff0401fe02fdff00040001fbfafefd00000002fe02fcfeff00fe010303020004fe0105fc00fd00ff0001fd04fe0302feff000000fe00ff02fefefdfe00010000030000000002fe0201"
+	bobPrivateKeyBytes, err := hex.DecodeString(bobPrivateKeyHex)
+	require.NoError(t, err)
+	bobPrivateKey := new(PrivateKey)
+	bobPrivateKey.FromBytes(bobPrivateKeyBytes)
+
+	bobPublicKeyHex := "839aa1c32d36bb9e75cdb5c5ea62aea6ee56b8521dfae8bbfde9a70895f8f381b5a36bf5a87c2a5cda8b498711add07f21deaed998d985f7f79578759e233c25"
+	bobPublicKeyBytes, err := hex.DecodeString(bobPublicKeyHex)
+	bobPublicKey := new(PublicKey)
+	err = bobPublicKey.FromBytes(bobPublicKeyBytes)
+	require.NoError(t, err)
+
+	// NIKE
+	bobSharedBytes, err := DeriveSecret(bobPrivateKey, alicePublicKey)
+	require.NoError(t, err)
+
+	aliceSharedBytes, err := DeriveSecret(alicePrivateKey, bobPublicKey)
+	require.NoError(t, err)
+	require.Equal(t, bobSharedBytes, aliceSharedBytes)
+
+	sharedSecretHex := "74cc3560ed96ca88ad111f2feb5002240bc3a389c1b768eb588e4c4432a9ed748a5341b68618ed49bb81b3554fb6a5bc41289513c5321faa9b8230611f50f311"
+	sharedSecretBytes, err := hex.DecodeString(sharedSecretHex)
+	require.NoError(t, err)
+
+	require.Equal(t, sharedSecretBytes, aliceSharedBytes)
+}
 
 func TestPython511BitVectors(t *testing.T) {
 
@@ -53,4 +94,3 @@ func TestPython511BitVectors(t *testing.T) {
 
 	require.Equal(t, sharedSecretBytes, aliceSharedBytes)
 }
-
