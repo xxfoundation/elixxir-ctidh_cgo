@@ -15,19 +15,11 @@ Build
 Step 1
 ------
 
-Get the latest CTIDH reference implementation from it's canonical source:
-
-https://ctidh.isogeny.org/
-
-For example:
+Get high-ctidh:
 
 ```
-wget -m https://ctidh.isogeny.org/high-ctidh-latest-version.txt
-version=$(cat ctidh.isogeny.org/high-ctidh-latest-version.txt)
-wget -m https://ctidh.isogeny.org/high-ctidh-$version.tar.gz
-tar -xzf ctidh.isogeny.org/high-ctidh-$version.tar.gz
+git clone https://git.xx.network/elixxir/high-ctidh.git
 ```
-
 
 Step 2
 ------
@@ -35,13 +27,11 @@ Step 2
 Build the CTIDH C shared library files:
 
 ```
-cd high-ctidh-20210523
-patch -p1 < ../autogen-memoized.patch
+cd high-ctidh
 ./autogen
 make libhighctidh_511.so libhighctidh_512.so libhighctidh_1024.so libhighctidh_2048.so
 cd ..
 ```
-
 
 Step 3
 ------
@@ -66,9 +56,9 @@ the LD_LIBRARY_PATH environment variable:
 export CTIDH_BITS=512
 cp binding${CTIDH_BITS}.h binding.h
 export PWD=`pwd`
-export CGO_CFLAGS="-g -I${PWD}/high-ctidh-20210523 -DBITS=${CTIDH_BITS}"
-export CGO_LDFLAGS="-L${PWD}/high-ctidh-20210523 -l:libhighctidh_${CTIDH_BITS}.so"
-export LD_LIBRARY_PATH="${PWD}/high-ctidh-20210523"
+export CGO_CFLAGS="-g -I${PWD}/high-ctidh -DBITS=${CTIDH_BITS}"
+export CGO_LDFLAGS="-L${PWD}/high-ctidh -l:libhighctidh_${CTIDH_BITS}.so"
+export LD_LIBRARY_PATH="${PWD}/high-ctidh"
 go test -v
 ```
 
@@ -80,8 +70,8 @@ LD_LIBRARY_PATH:
 export CTIDH_BITS=512
 cp binding${CTIDH_BITS}.h binding.h
 export PWD=`pwd`
-export CGO_CFLAGS="-g -I${PWD}/high-ctidh-20210523 -DBITS=${CTIDH_BITS}"
-export CGO_LDFLAGS="-L${PWD}/high-ctidh-20210523 -Wl,-rpath,./high-ctidh-20210523 -lhighctidh_${CTIDH_BITS}"
+export CGO_CFLAGS="-g -I${PWD}/high-ctidh -DBITS=${CTIDH_BITS}"
+export CGO_LDFLAGS="-L${PWD}/high-ctidh -Wl,-rpath,./high-ctidh -lhighctidh_${CTIDH_BITS}"
 go test -v
 ```
 
@@ -98,8 +88,8 @@ do
 export CTIDH_BITS=$bits
 cp binding${CTIDH_BITS}.h binding.h
 export PWD=`pwd`
-export CGO_CFLAGS="-g -I${PWD}/high-ctidh-20210523 -DBITS=${CTIDH_BITS}"
-export CGO_LDFLAGS="-L${PWD}/high-ctidh-20210523 -Wl,-rpath,./high-ctidh-20210523 -lhighctidh_${CTIDH_BITS}"
+export CGO_CFLAGS="-g -I${PWD}/high-ctidh -DBITS=${CTIDH_BITS}"
+export CGO_LDFLAGS="-L${PWD}/high-ctidh -Wl,-rpath,./high-ctidh -lhighctidh_${CTIDH_BITS}"
 go test -bench=DeriveSecret
 done
 
@@ -118,8 +108,8 @@ do
 export CTIDH_BITS=$bits
 cp binding${CTIDH_BITS}.h binding.h
 export PWD=`pwd`
-export CGO_CFLAGS="-g -I${PWD}/high-ctidh-20210523 -DBITS=${CTIDH_BITS}"
-export CGO_LDFLAGS="-L${PWD}/high-ctidh-20210523 -Wl,-rpath,./high-ctidh-20210523 -lhighctidh_${CTIDH_BITS}"
+export CGO_CFLAGS="-g -I${PWD}/high-ctidh -DBITS=${CTIDH_BITS}"
+export CGO_LDFLAGS="-L${PWD}/high-ctidh -Wl,-rpath,./high-ctidh -lhighctidh_${CTIDH_BITS}"
 go test -v -tags=bits${CTIDH_BITS} -run=${CTIDH_BITS}
 done
 ```
