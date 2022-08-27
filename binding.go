@@ -36,6 +36,18 @@ type PublicKey struct {
 	publicKey C.public_key
 }
 
+// NewPublicKey creates a new public key from
+// the given key material or panics if the
+// key data is not PublicKeySize.
+func NewPublicKey(key []byte) *PublicKey {
+	k := new(PublicKey)
+	err := k.FromBytes(key)
+	if err != nil {
+		panic(err)
+	}
+	return k
+}
+
 // Reset resets the PublicKey to all zeros.
 func (p *PublicKey) Reset() {
 	zeros := make([]byte, PublicKeySize)
@@ -143,7 +155,18 @@ func DeriveSecret(privateKey *PrivateKey, publicKey *PublicKey) []byte {
 	return sharedSecret.Bytes()
 }
 
-// Blind performs the blinding operation against the
+// Blind performs a blinding operation
+// returning the blinded public key.
+func Blind(blindingFactor []byte, publicKey *PublicKey) *PublicKey {
+	privKey := new(PrivateKey)
+	err := privKey.FromBytes(blindingFactor)
+	if err != nil {
+		panic(err)
+	}
+	return groupAction(privKey, publicKey)
+}
+
+// BlindBytes performs the blinding operation against the
 // two byte slices which must be the correct lengths:
 //
 // * publicKeyBytes must be the size of a public key.
@@ -151,7 +174,7 @@ func DeriveSecret(privateKey *PrivateKey, publicKey *PublicKey) []byte {
 // * blindingFactor must be the size of a private key.
 //
 // See also PublicKey's Blind method.
-func Blind(publicKeyBytes, blindingFactor []byte) ([]byte, error) {
+func BlindBytes(publicKeyBytes, blindingFactor []byte) ([]byte, error) {
 	if len(publicKeyBytes) != PublicKeySize {
 		return nil, ErrBlindDataSizeInvalid
 	}
