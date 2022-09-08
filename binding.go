@@ -5,6 +5,7 @@ package ctidh
 import "C"
 import (
 	"errors"
+	"fmt"
 	"unsafe"
 )
 
@@ -46,6 +47,12 @@ func NewPublicKey(key []byte) *PublicKey {
 		panic(err)
 	}
 	return k
+}
+
+// String returns a string identifying
+// this type as a CTIDH public key.
+func (p *PublicKey) String() string {
+	return Name() + "_PublicKey"
 }
 
 // Reset resets the PublicKey to all zeros.
@@ -98,6 +105,12 @@ func (p *PublicKey) Blind(data []byte) error {
 // PrivateKey is a private CTIDH key.
 type PrivateKey struct {
 	privateKey C.private_key
+}
+
+// String returns a string identifying
+// this type as a CTIDH private key.
+func (p *PrivateKey) String() string {
+	return Name() + "_PrivateKey"
 }
 
 // Reset resets the PrivateKey to all zeros.
@@ -191,6 +204,15 @@ func BlindBytes(publicKeyBytes, blindingFactor []byte) ([]byte, error) {
 
 	pubKey.Blind(blindingFactor)
 	return pubKey.Bytes(), nil
+}
+
+// Name returns the string naming of the current
+// CTIDH that this binding is being used with;
+// Valid values are:
+//
+// CTIDH-511, CTIDH-512, CTIDH-1024 and, CTIDH-2048.
+func Name() string {
+	return fmt.Sprintf("CTIDH-%d", C.BITS)
 }
 
 func validateBitSize(bits int) {
