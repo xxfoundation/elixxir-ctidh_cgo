@@ -4,8 +4,10 @@ package ctidh
 // #include <csidh.h>
 import "C"
 import (
-	"errors"
+	"bytes"
+	"encoding/pem"
 	"fmt"
+	"io/ioutil"
 	"unsafe"
 )
 
@@ -17,24 +19,43 @@ var (
 	PrivateKeySize int
 
 	// ErrBlindDataSizeInvalid indicates that the blinding data size was invalid.
-	ErrBlindDataSizeInvalid error = errors.New("CTIDH/cgo: blinding data size invalid")
+	ErrBlindDataSizeInvalid error = fmt.Errorf("%s: blinding data size invalid", Name())
 
 	// ErrPublicKeyValidation indicates a public key validation failure.
-	ErrPublicKeyValidation error = errors.New("CTIDH/cgo: public key validation failure")
+	ErrPublicKeyValidation error = fmt.Errorf("%s: public key validation failure", Name())
 
 	// ErrPublicKeySize indicates the raw data is not the correct size for a public key.
-	ErrPublicKeySize error = errors.New("CTIDH/cgo: raw public key data size is wrong")
+	ErrPublicKeySize error = fmt.Errorf("%s: raw public key data size is wrong", Name())
 
 	// ErrPrivateKeySize indicates the raw data is not the correct size for a private key.
-	ErrPrivateKeySize error = errors.New("CTIDH/cgo: raw private key data size is wrong")
+	ErrPrivateKeySize error = fmt.Errorf("%s: raw private key data size is wrong", Name())
 
 	// ErrCTIDH indicates a group action failure.
-	ErrCTIDH error = errors.New("CTIDH/cgo: group action failure")
+	ErrCTIDH error = fmt.Errorf("%s: group action failure", Name())
 )
+
+// ErrPEMKeyTypeMismatch returns an error indicating that we tried
+// to decode a PEM file containing a differing key type than the one
+// we expected.
+func ErrPEMKeyTypeMismatch(pemFile, gotType, wantType string) error {
+	return fmt.Errorf("%s: Attempted to decode a PEM file %s of type %s which differs from the type we want %s",
+		Name(),
+		pemFile,
+		gotType,
+		wantType)
+}
 
 // PublicKey is a public CTIDH key.
 type PublicKey struct {
 	publicKey C.public_key
+}
+
+// NewEmptyPublicKey returns an uninitialized
+// PublicKey which is suitable to be loaded
+// via some serialization format via FromBytes
+// or FromPEMFile methods.
+func NewEmptyPublicKey() *PublicKey {
+	return new(PublicKey)
 }
 
 // NewPublicKey creates a new public key from
@@ -53,6 +74,39 @@ func NewPublicKey(key []byte) *PublicKey {
 // this type as a CTIDH public key.
 func (p *PublicKey) String() string {
 	return Name() + "_PublicKey"
+}
+
+// ToPEMFile writes out the PublicKey to a PEM file at path f.
+func (p *PublicKey) ToPEMFile(f string) error {
+	keyType := Name() + " PUBLIC KEY"
+
+	zeros := make([]byte, PublicKeySize)
+	if bytes.Equal(p.Bytes(), zeros) {
+		return fmt.Errorf("%s: attemted to serialize scrubbed key", Name())
+	}
+	blk := &pem.Block{
+		Type:  keyType,
+		Bytes: p.Bytes(),
+	}
+	return ioutil.WriteFile(f, pem.EncodeToMemory(blk), 0600)
+}
+
+// FromPEMFile reads the PublicKey from a PEM file at path f.
+func (p *PublicKey) FromPEMFile(f string) error {
+	keyType := Name() + " PUBLIC KEY"
+
+	buf, err := ioutil.ReadFile(f)
+	if err != nil {
+		return err
+	}
+	blk, _ := pem.Decode(buf)
+	if blk == nil {
+		return fmt.Errorf("%s: failed to decode PEM file %v", Name(), f)
+	}
+	if blk.Type != keyType {
+		return ErrPEMKeyTypeMismatch(f, blk.Type, keyType)
+	}
+	return p.FromBytes(blk.Bytes)
 }
 
 // Reset resets the PublicKey to all zeros.
@@ -107,6 +161,14 @@ type PrivateKey struct {
 	privateKey C.private_key
 }
 
+// NewEmptyPrivateKey returns an uninitialized
+// PrivateKey which is suitable to be loaded
+// via some serialization format via FromBytes
+// or FromPEMFile methods.
+func NewEmptyPrivateKey() *PrivateKey {
+	return new(PrivateKey)
+}
+
 // String returns a string identifying
 // this type as a CTIDH private key.
 func (p *PrivateKey) String() string {
@@ -135,6 +197,39 @@ func (p *PrivateKey) FromBytes(data []byte) error {
 
 	p.privateKey = *((*C.private_key)(unsafe.Pointer(&data[0])))
 	return nil
+}
+
+// ToPEMFile writes out the PrivateKey to a PEM file at path f.
+func (p *PrivateKey) ToPEMFile(f string) error {
+	keyType := Name() + " PRIVATE KEY"
+
+	zeros := make([]byte, PrivateKeySize)
+	if bytes.Equal(p.Bytes(), zeros) {
+		return fmt.Errorf("%s: attemted to serialize scrubbed key", Name())
+	}
+	blk := &pem.Block{
+		Type:  keyType,
+		Bytes: p.Bytes(),
+	}
+	return ioutil.WriteFile(f, pem.EncodeToMemory(blk), 0600)
+}
+
+// FromPEMFile reads the PrivateKey from a PEM file at path f.
+func (p *PrivateKey) FromPEMFile(f string) error {
+	keyType := Name() + " PRIVATE KEY"
+
+	buf, err := ioutil.ReadFile(f)
+	if err != nil {
+		return err
+	}
+	blk, _ := pem.Decode(buf)
+	if blk == nil {
+		return fmt.Errorf("%s: failed to decode PEM file %v", Name(), f)
+	}
+	if blk.Type != keyType {
+		return ErrPEMKeyTypeMismatch(f, blk.Type, keyType)
+	}
+	return p.FromBytes(blk.Bytes)
 }
 
 // DerivePublicKey derives a public key given a private key.

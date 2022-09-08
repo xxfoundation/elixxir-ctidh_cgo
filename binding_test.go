@@ -1,10 +1,46 @@
 package ctidh
 
 import (
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 )
+
+func TestPrivateKeyPEMSerialization(t *testing.T) {
+	privateKey, _ := GenerateKeyPair()
+
+	tmpdir := os.TempDir()
+
+	privateKeyPemFile := "private_key.pem"
+	pemFile := filepath.Join(tmpdir, privateKeyPemFile)
+	err := privateKey.ToPEMFile(pemFile)
+	require.NoError(t, err)
+
+	privateKey2 := NewEmptyPrivateKey()
+	err = privateKey2.FromPEMFile(pemFile)
+	require.NoError(t, err)
+
+	require.Equal(t, privateKey.Bytes(), privateKey2.Bytes())
+}
+
+func TestPublicKeyPEMSerialization(t *testing.T) {
+	_, publicKey := GenerateKeyPair()
+
+	tmpdir := os.TempDir()
+
+	publicKeyPemFile := "public_key.pem"
+	pemFile := filepath.Join(tmpdir, publicKeyPemFile)
+	err := publicKey.ToPEMFile(pemFile)
+	require.NoError(t, err)
+
+	publicKey2 := NewEmptyPublicKey()
+	err = publicKey2.FromPEMFile(pemFile)
+	require.NoError(t, err)
+
+	require.Equal(t, publicKey.Bytes(), publicKey2.Bytes())
+}
 
 func TestPublicKeyReset(t *testing.T) {
 	zeros := make([]byte, PublicKeySize)
