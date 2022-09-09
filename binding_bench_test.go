@@ -62,3 +62,9 @@ func BenchmarkDeriveSecret(b *testing.B) {
 	bobSharedBytes := DeriveSecret(bobPrivate, alicePublic)
 	require.Equal(b, bobSharedBytes, aliceSharedBytes)
 }
+
+func BenchmarkGenerateKeyPair(b *testing.B) {
+	for n := 0; n < b.N; n++ {
+		_, _ = GenerateKeyPair()
+	}
+}
