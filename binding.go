@@ -139,20 +139,17 @@ func (p *PublicKey) FromBytes(data []byte) error {
 
 // Blind performs a blinding operation
 // and mutates the public key.
-func (p *PublicKey) Blind(data []byte) error {
-	if len(data) != PrivateKeySize {
+// See notes below about blinding operation with CTIDH.
+func (p *PublicKey) Blind(blindingFactor []byte) error {
+	if len(blindingFactor) != PrivateKeySize {
 		return ErrBlindDataSizeInvalid
 	}
-
-	privKey := new(PrivateKey)
-	err := privKey.FromBytes(data)
+	var err error
+	blinded, err := Blind(blindingFactor, p)
 	if err != nil {
-		return err
+		panic(err)
 	}
-
-	pubKey := groupAction(privKey, p)
-	p.publicKey = pubKey.publicKey
-
+	p.publicKey = blinded.publicKey
 	return nil
 }
 
@@ -263,42 +260,26 @@ func DeriveSecret(privateKey *PrivateKey, publicKey *PublicKey) []byte {
 	return sharedSecret.Bytes()
 }
 
-// Blind performs a blinding operation
-// returning the blinded public key.
-func Blind(blindingFactor []byte, publicKey *PublicKey) *PublicKey {
-	privKey := new(PrivateKey)
-	err := privKey.FromBytes(blindingFactor)
-	if err != nil {
-		panic(err)
-	}
-	return groupAction(privKey, publicKey)
-}
-
-// BlindBytes performs the blinding operation against the
-// two byte slices which must be the correct lengths:
+// Blind performs a blinding operation returning the blinded public key.
 //
-// * publicKeyBytes must be the size of a public key.
-//
-// * blindingFactor must be the size of a private key.
-//
-// See also PublicKey's Blind method.
-func BlindBytes(publicKeyBytes, blindingFactor []byte) ([]byte, error) {
-	if len(publicKeyBytes) != PublicKeySize {
-		return nil, ErrBlindDataSizeInvalid
-	}
-
+// WARNING:
+// Currently this blinding operation is not performed correctly
+// because the blindingFactor is not a valid CTIDH private key.
+// In order to fix this we need to be able to use the blinding
+// factor as a seed for deterministically generating the CTIDH private key
+// which participates in the group action operation.
+// This will require a change to the high-ctidh library.
+func Blind(blindingFactor []byte, publicKey *PublicKey) (*PublicKey, error) {
 	if len(blindingFactor) != PrivateKeySize {
 		return nil, ErrBlindDataSizeInvalid
 	}
 
-	pubKey := new(PublicKey)
-	err := pubKey.FromBytes(publicKeyBytes)
+	privKey := new(PrivateKey)
+	err := privKey.FromBytes(blindingFactor)
 	if err != nil {
 		return nil, err
 	}
-
-	pubKey.Blind(blindingFactor)
-	return pubKey.Bytes(), nil
+	return groupAction(privKey, publicKey), nil
 }
 
 // Name returns the string naming of the current
