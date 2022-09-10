@@ -9,8 +9,8 @@ a noninteractive key exchange.
 Learn more about CTIDH: https://ctidh.isogeny.org/
 
 
-Build
-=====
+How to Build
+============
 
 Step 1
 ------
@@ -38,19 +38,34 @@ Step 3
 
 Build your Go application.
 
-I've created several header files one for each key size: binding511.h, binding512.h, binding1024.h and binding2048.h
-You'll have to copy one of these to `binding.h`. Below the bash examples
-do it like this:
+Let $P point to the ctidh_cgo directory:
 
 ```
-export CTIDH_BITS=512
-cp binding${CTIDH_BITS}.h binding.h
+export P=/home/human/code/ctidh_cgo
 ```
 
-In order to run the unit tests or build a Go project against this
-library you'll have to set the CGO CFLAGS and LDFLAGS to indicate the
-absolute path to the library and header files. Here's an example using
-the LD_LIBRARY_PATH environment variable:
+Copy the binding header file for your desired key size
+and set some environment variables:
+
+```
+export CTIDH_BITS=1024
+cp ${P}/binding${CTIDH_BITS}.h ${P}/binding.h
+export CGO_CFLAGS="-g -I${P} -I${P}/high-ctidh -DBITS=${CTIDH_BITS}"
+export CGO_LDFLAGS="-L${P}/high-ctidh -Wl,-rpath,./high-ctidh -lhighctidh_${CTIDH_BITS}"
+```
+
+The the header file in place and these environment variables sets you
+should now be able to build your Go application which imports and
+makes use of the CTIDH Golang bindings.
+
+
+CTIDH Tests and Benchmarks
+===========================
+
+In order to run the unit tests you'll have to set the CGO CFLAGS and
+LDFLAGS to indicate the absolute path to the library and header
+files. Here's an example using the LD_LIBRARY_PATH environment
+variable:
 
 ```
 export CTIDH_BITS=512
@@ -113,6 +128,7 @@ export CGO_LDFLAGS="-L${PWD}/high-ctidh -Wl,-rpath,./high-ctidh -lhighctidh_${CT
 go test -v -tags=bits${CTIDH_BITS} -run=${CTIDH_BITS}
 done
 ```
+
 
 License
 =======
