@@ -229,6 +229,12 @@ func (p *PrivateKey) FromPEMFile(f string) error {
 	return p.FromBytes(blk.Bytes)
 }
 
+// PublicKey returns the public key associated
+// with the given private key.
+func (p *PrivateKey) PublicKey() *PublicKey {
+	return DerivePublicKey(p)
+}
+
 // DerivePublicKey derives a public key given a private key.
 func DerivePublicKey(privKey *PrivateKey) *PublicKey {
 	var base C.public_key
