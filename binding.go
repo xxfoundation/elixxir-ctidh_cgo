@@ -5,6 +5,7 @@ package ctidh
 import "C"
 import (
 	"bytes"
+	"crypto/hmac"
 	"encoding/pem"
 	"fmt"
 	"io/ioutil"
@@ -156,6 +157,11 @@ func (p *PublicKey) FromBytes(data []byte) error {
 	return nil
 }
 
+// Equal is a constant time comparison of the two public keys.
+func (p *PublicKey) Equal(publicKey *PublicKey) bool {
+	return hmac.Equal(p.Bytes(), publicKey.Bytes())
+}
+
 // Blind performs a blinding operation
 // and mutates the public key.
 // See notes below about blinding operation with CTIDH.
@@ -215,6 +221,11 @@ func (p *PrivateKey) FromBytes(data []byte) error {
 	return nil
 }
 
+// Equal is a constant time comparison of the two private keys.
+func (p *PrivateKey) Equal(privateKey *PrivateKey) bool {
+	return hmac.Equal(p.Bytes(), privateKey.Bytes())
+}
+
 // ToPEM writes out the PrivateKey to a PEM block.
 func (p *PrivateKey) ToPEM() (*pem.Block, error) {
 	keyType := Name() + " PRIVATE KEY"
@@ -265,6 +276,12 @@ func (p *PrivateKey) FromPEMFile(f string) error {
 		return fmt.Errorf("%s in file %s", err.Error(), f)
 	}
 	return nil
+}
+
+// PublicKey returns the public key associated
+// with the given private key.
+func (p *PrivateKey) PublicKey() *PublicKey {
+	return DerivePublicKey(p)
 }
 
 // DerivePublicKey derives a public key given a private key.
