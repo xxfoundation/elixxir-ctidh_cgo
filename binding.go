@@ -37,10 +37,10 @@ var (
 // ErrPEMKeyTypeMismatch returns an error indicating that we tried
 // to decode a PEM file containing a differing key type than the one
 // we expected.
-func ErrPEMKeyTypeMismatch(pemFile, gotType, wantType string) error {
-	return fmt.Errorf("%s: Attempted to decode a PEM file %s of type %s which differs from the type we want %s",
+func ErrPEMKeyTypeMismatch(gotType, wantType string) error {
+	return fmt.Errorf("%s: Attempted to decode a PEM bytes of type %s"+
+		" which differs from the type we want %s",
 		Name(),
-		pemFile,
 		gotType,
 		wantType)
 }
@@ -76,37 +76,56 @@ func (p *PublicKey) String() string {
 	return Name() + "_PublicKey"
 }
 
-// ToPEMFile writes out the PublicKey to a PEM file at path f.
-func (p *PublicKey) ToPEMFile(f string) error {
+// ToPEM writes out the PublicKey to a PEM block and returns it
+func (p *PublicKey) ToPEM() (*pem.Block, error) {
 	keyType := Name() + " PUBLIC KEY"
 
 	zeros := make([]byte, PublicKeySize)
 	if bytes.Equal(p.Bytes(), zeros) {
-		return fmt.Errorf("%s: attemted to serialize scrubbed key", Name())
+		return nil, fmt.Errorf("%s: attemted to serialize scrubbed key",
+			Name())
 	}
 	blk := &pem.Block{
 		Type:  keyType,
 		Bytes: p.Bytes(),
 	}
+	return blk, nil
+}
+
+// ToPEMFile writes out the PublicKey to a PEM file at path f.
+func (p *PublicKey) ToPEMFile(f string) error {
+	blk, err := p.ToPEM()
+	if err != nil {
+		return err
+	}
 	return ioutil.WriteFile(f, pem.EncodeToMemory(blk), 0600)
+}
+
+// FromPEM reads the PublicKey from a PEM encoded byte slice.
+func (p *PublicKey) FromPEM(pemBytes []byte) error {
+	keyType := Name() + " PUBLIC KEY"
+
+	blk, _ := pem.Decode(pemBytes)
+	if blk == nil {
+		return fmt.Errorf("%s: failed to decode PEM", Name())
+	}
+	if blk.Type != keyType {
+		return ErrPEMKeyTypeMismatch(blk.Type, keyType)
+	}
+	return p.FromBytes(blk.Bytes)
 }
 
 // FromPEMFile reads the PublicKey from a PEM file at path f.
 func (p *PublicKey) FromPEMFile(f string) error {
-	keyType := Name() + " PUBLIC KEY"
-
 	buf, err := ioutil.ReadFile(f)
 	if err != nil {
 		return err
 	}
-	blk, _ := pem.Decode(buf)
-	if blk == nil {
-		return fmt.Errorf("%s: failed to decode PEM file %v", Name(), f)
+	err = p.FromPEM(buf)
+	if err != nil {
+		return fmt.Errorf("%s in file %s", err.Error(), f)
 	}
-	if blk.Type != keyType {
-		return ErrPEMKeyTypeMismatch(f, blk.Type, keyType)
-	}
-	return p.FromBytes(blk.Bytes)
+	return nil
 }
 
 // Reset resets the PublicKey to all zeros.
@@ -196,37 +215,56 @@ func (p *PrivateKey) FromBytes(data []byte) error {
 	return nil
 }
 
-// ToPEMFile writes out the PrivateKey to a PEM file at path f.
-func (p *PrivateKey) ToPEMFile(f string) error {
+// ToPEM writes out the PrivateKey to a PEM block.
+func (p *PrivateKey) ToPEM() (*pem.Block, error) {
 	keyType := Name() + " PRIVATE KEY"
 
 	zeros := make([]byte, PrivateKeySize)
 	if bytes.Equal(p.Bytes(), zeros) {
-		return fmt.Errorf("%s: attemted to serialize scrubbed key", Name())
+		return nil, fmt.Errorf("%s: attemted to serialize scrubbed key",
+			Name())
 	}
 	blk := &pem.Block{
 		Type:  keyType,
 		Bytes: p.Bytes(),
 	}
+	return blk, nil
+}
+
+// ToPEMFile writes out the PrivateKey to a PEM file at path f.
+func (p *PrivateKey) ToPEMFile(f string) error {
+	blk, err := p.ToPEM()
+	if err != nil {
+		return err
+	}
 	return ioutil.WriteFile(f, pem.EncodeToMemory(blk), 0600)
+}
+
+// FromPEM reads the PrivateKey from a PEM byte slice.
+func (p *PrivateKey) FromPEM(pemBytes []byte) error {
+	keyType := Name() + " PRIVATE KEY"
+
+	blk, _ := pem.Decode(pemBytes)
+	if blk == nil {
+		return fmt.Errorf("%s: failed to decode PEM bytes", Name())
+	}
+	if blk.Type != keyType {
+		return ErrPEMKeyTypeMismatch(blk.Type, keyType)
+	}
+	return p.FromBytes(blk.Bytes)
 }
 
 // FromPEMFile reads the PrivateKey from a PEM file at path f.
 func (p *PrivateKey) FromPEMFile(f string) error {
-	keyType := Name() + " PRIVATE KEY"
-
 	buf, err := ioutil.ReadFile(f)
 	if err != nil {
 		return err
 	}
-	blk, _ := pem.Decode(buf)
-	if blk == nil {
-		return fmt.Errorf("%s: failed to decode PEM file %v", Name(), f)
+	err = p.FromPEM(buf)
+	if err != nil {
+		return fmt.Errorf("%s in file %s", err.Error(), f)
 	}
-	if blk.Type != keyType {
-		return ErrPEMKeyTypeMismatch(f, blk.Type, keyType)
-	}
-	return p.FromBytes(blk.Bytes)
+	return nil
 }
 
 // DerivePublicKey derives a public key given a private key.
