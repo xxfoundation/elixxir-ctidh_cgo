@@ -29,8 +29,27 @@ test:
     - unzip high-ctidh.zip
     - export P=`pwd`    
     - cd ..
+# 511
+    - cp binding511.h binding.h
+    - export CTIDH_BITS=511
+    - export CGO_CFLAGS="-g -I${P} -DBITS=${CTIDH_BITS}"
+    - export CGO_LDFLAGS="-L${P} -Wl,-rpath,${P} -lhighctidh_${CTIDH_BITS}"
+    - go test -v -bench .
+# 512
+    - cp binding512.h binding.h
+    - export CTIDH_BITS=512
+    - export CGO_CFLAGS="-g -I${P} -DBITS=${CTIDH_BITS}"
+    - export CGO_LDFLAGS="-L${P} -Wl,-rpath,${P} -lhighctidh_${CTIDH_BITS}"
+    - go test -v -bench .
+# 1024
     - cp binding1024.h binding.h
     - export CTIDH_BITS=1024
     - export CGO_CFLAGS="-g -I${P} -DBITS=${CTIDH_BITS}"
     - export CGO_LDFLAGS="-L${P} -Wl,-rpath,${P} -lhighctidh_${CTIDH_BITS}"
-    - go test -v
+    - go test -v -bench .
+# 2048
+    - cp binding2048.h binding.h
+    - export CTIDH_BITS=2048
+    - export CGO_CFLAGS="-g -I${P} -DBITS=${CTIDH_BITS}"
+    - export CGO_LDFLAGS="-L${P} -Wl,-rpath,${P} -lhighctidh_${CTIDH_BITS}"
+    - go test -v -bench .
