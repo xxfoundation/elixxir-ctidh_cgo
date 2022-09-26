@@ -27,8 +27,9 @@ test:
     - cd high-ctidh
     - 'wget -O high-ctidh.zip --header="PRIVATE-TOKEN: $GITLAB_ACCESS_TOKEN" "https://$GITLAB_SERVER/api/v4/projects/elixxir%2Fhigh-ctidh/jobs/artifacts/master/download?job=build"'
     - unzip high-ctidh.zip
+    - export P=`pwd`    
+    - cd ..
     - cp binding1024.h binding.h
-    - export P=`pwd`
     - export CTIDH_BITS=1024
     - export CGO_CFLAGS="-g -I${P} -DBITS=${CTIDH_BITS}"
     - export CGO_LDFLAGS="-L${P} -Wl,-rpath,${P} -lhighctidh_${CTIDH_BITS}"
