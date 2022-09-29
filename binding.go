@@ -191,6 +191,11 @@ func NewEmptyPrivateKey() *PrivateKey {
 	return new(PrivateKey)
 }
 
+// DeriveSecret derives a shared secret.
+func (p *PrivateKey) DeriveSecret(publicKey *PublicKey) []byte {
+	return DeriveSecret(p, publicKey)
+}
+
 // String returns a string identifying
 // this type as a CTIDH private key.
 func (p *PrivateKey) String() string {
