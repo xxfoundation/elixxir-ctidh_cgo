@@ -1,14 +1,31 @@
 package ctidh
 
-// #include "binding.h"
-// #include <csidh.h>
+/*
+#include "binding.h"
+#include <csidh.h>
+
+void custom_gen_private(private_key *priv) {
+  csidh_private_withrng(priv, fillrandom_custom);
+}
+
+void fillrandom_custom(
+  void *const outptr,
+  const size_t outsz,
+  const uintptr_t context)
+{
+  (void) context;
+  go_fillrandom(outptr, outsz);
+}
+*/
 import "C"
 import (
 	"bytes"
 	"crypto/hmac"
 	"encoding/pem"
 	"fmt"
+	"io"
 	"io/ioutil"
+	"sync"
 	"unsafe"
 )
 
@@ -33,6 +50,9 @@ var (
 
 	// ErrCTIDH indicates a group action failure.
 	ErrCTIDH error = fmt.Errorf("%s: group action failure", Name())
+
+	privateKeyRNGLock sync.Mutex
+	privateKeyRNG     io.Reader = nil
 )
 
 // ErrPEMKeyTypeMismatch returns an error indicating that we tried
@@ -297,6 +317,39 @@ func DerivePublicKey(privKey *PrivateKey) *PublicKey {
 func GenerateKeyPair() (*PrivateKey, *PublicKey) {
 	privKey := new(PrivateKey)
 	C.csidh_private(&privKey.privateKey)
+	return privKey, DerivePublicKey(privKey)
+}
+
+//export go_fillrandom
+func go_fillrandom(outptr unsafe.Pointer, outsz C.size_t) {
+	buf := make([]byte, outsz)
+	privateKeyRNGLock.Lock()
+	rng := privateKeyRNG
+	privateKeyRNGLock.Unlock()
+	count, err := rng.Read(buf)
+	if err != nil {
+		panic(err)
+	}
+	if count != int(outsz) {
+		panic("rng fail")
+	}
+	p := uintptr(outptr)
+	for i := 0; i < int(outsz); i++ {
+		(*(*uint8)(unsafe.Pointer(p))) = uint8(buf[i])
+		p += 1
+	}
+}
+
+// GenerateKeyPairWithRNG uses the given RNG to derive a new keypair.
+// HOWEVER, if GenerateKeyPairWithRNG is called by multiple threads
+// then the rng is overwritten with each call which can unintentionally
+// cause multiple RNGs to be used to generate the keypair.
+func GenerateKeyPairWithRNG(rng io.Reader) (*PrivateKey, *PublicKey) {
+	privKey := new(PrivateKey)
+	privateKeyRNGLock.Lock()
+	privateKeyRNG = rng
+	privateKeyRNGLock.Unlock()
+	C.custom_gen_private(&privKey.privateKey)
 	return privKey, DerivePublicKey(privKey)
 }
 
