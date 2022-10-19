@@ -11,12 +11,9 @@ import (
 
 func TestGenerateKeyPairWithRNG(t *testing.T) {
 	privateKey, publicKey := GenerateKeyPairWithRNG(rand.Reader)
-
 	zeros := make([]byte, PublicKeySize)
 	require.NotEqual(t, privateKey.Bytes(), zeros)
 	require.NotEqual(t, publicKey.Bytes(), zeros)
-
-	t.Logf("privateKey.Bytes() %x", privateKey.Bytes())
 }
 
 func TestPrivateKeyPEMSerialization(t *testing.T) {

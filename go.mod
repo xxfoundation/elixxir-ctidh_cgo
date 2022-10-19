@@ -2,4 +2,7 @@ module git.xx.network/elixxir/ctidh_cgo
 
 go 1.16
 
-require github.com/stretchr/testify v1.8.0
+require (
+	github.com/mattn/go-pointer v0.0.1 // indirect
+	github.com/stretchr/testify v1.8.0
+)

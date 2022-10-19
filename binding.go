@@ -4,8 +4,10 @@ package ctidh
 #include "binding.h"
 #include <csidh.h>
 
-void custom_gen_private(private_key *priv) {
-  csidh_private_withrng(priv, fillrandom_custom);
+extern ctidh_fillrandom fillrandom_custom;
+
+void custom_gen_private(void* context, private_key *priv) {
+  csidh_private_withrng((uintptr_t)context, priv, fillrandom_custom);
 }
 
 void fillrandom_custom(
@@ -24,8 +26,9 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"sync"
 	"unsafe"
+
+	gopointer "github.com/mattn/go-pointer"
 )
 
 var (
@@ -49,42 +52,7 @@ var (
 
 	// ErrCTIDH indicates a group action failure.
 	ErrCTIDH error = fmt.Errorf("%s: group action failure", Name())
-
-	rngMapLock sync.RWMutex
-
-	rngMap map[unsafe.Pointer]io.Reader
 )
-
-func save(key unsafe.Pointer, v io.Reader) {
-	if v == nil {
-		panic("save called with nil v")
-	}
-
-	rngMapLock.Lock()
-	rngMap[key] = v
-	rngMapLock.Unlock()
-}
-
-func restore(ptr unsafe.Pointer) (v io.Reader) {
-	if ptr == nil {
-		return nil
-	}
-
-	rngMapLock.RLock()
-	v = rngMap[ptr]
-	rngMapLock.RUnlock()
-	return
-}
-
-func unref(ptr unsafe.Pointer) {
-	if ptr == nil {
-		return
-	}
-
-	rngMapLock.Lock()
-	delete(rngMap, ptr)
-	rngMapLock.Unlock()
-}
 
 // ErrPEMKeyTypeMismatch returns an error indicating that we tried
 // to decode a PEM file containing a differing key type than the one
@@ -353,10 +321,7 @@ func GenerateKeyPair() (*PrivateKey, *PublicKey) {
 
 //export go_fillrandom
 func go_fillrandom(context unsafe.Pointer, outptr unsafe.Pointer, outsz C.size_t) {
-	rng := restore(context)
-	if rng == nil {
-		panic("rng is nil")
-	}
+	rng := gopointer.Restore(context).(io.Reader)
 	buf := make([]byte, outsz)
 	count, err := rng.Read(buf)
 	if err != nil {
@@ -375,9 +340,9 @@ func go_fillrandom(context unsafe.Pointer, outptr unsafe.Pointer, outsz C.size_t
 // GenerateKeyPairWithRNG uses the given RNG to derive a new keypair.
 func GenerateKeyPairWithRNG(rng io.Reader) (*PrivateKey, *PublicKey) {
 	privKey := &PrivateKey{}
-	save(unsafe.Pointer(&privKey.privateKey), rng)
-	defer unref(unsafe.Pointer(&privKey.privateKey))
-	C.custom_gen_private(&privKey.privateKey)
+	p := gopointer.Save(rng)
+	C.custom_gen_private(p, &privKey.privateKey)
+	gopointer.Unref(p)
 	return privKey, DerivePublicKey(privKey)
 }
 
@@ -439,9 +404,6 @@ func validateBitSize(bits int) {
 }
 
 func init() {
-
-	rngMap = make(map[unsafe.Pointer]io.Reader)
-
 	validateBitSize(C.BITS)
 	PrivateKeySize = C.primes_num
 	switch C.BITS {
