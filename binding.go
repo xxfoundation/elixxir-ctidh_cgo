@@ -22,6 +22,7 @@ import "C"
 import (
 	"bytes"
 	"crypto/hmac"
+	"crypto/sha256"
 	"encoding/pem"
 	"fmt"
 	"io"
@@ -29,6 +30,7 @@ import (
 	"unsafe"
 
 	gopointer "github.com/mattn/go-pointer"
+	"golang.org/x/crypto/hkdf"
 )
 
 var (
@@ -337,12 +339,17 @@ func go_fillrandom(context unsafe.Pointer, outptr unsafe.Pointer, outsz C.size_t
 	}
 }
 
-// GenerateKeyPairWithRNG uses the given RNG to derive a new keypair.
-func GenerateKeyPairWithRNG(rng io.Reader) (*PrivateKey, *PublicKey) {
+func GeneratePrivateKeyWithRNG(rng io.Reader) *PrivateKey {
 	privKey := &PrivateKey{}
 	p := gopointer.Save(rng)
 	C.custom_gen_private(p, &privKey.privateKey)
 	gopointer.Unref(p)
+	return privKey
+}
+
+// GenerateKeyPairWithRNG uses the given RNG to derive a new keypair.
+func GenerateKeyPairWithRNG(rng io.Reader) (*PrivateKey, *PublicKey) {
+	privKey := GeneratePrivateKeyWithRNG(rng)
 	return privKey, DerivePublicKey(privKey)
 }
 
@@ -362,25 +369,18 @@ func DeriveSecret(privateKey *PrivateKey, publicKey *PublicKey) []byte {
 }
 
 // Blind performs a blinding operation returning the blinded public key.
-//
-// WARNING:
-// Currently this blinding operation is not performed correctly
-// because the blindingFactor is not a valid CTIDH private key.
-// In order to fix this we need to be able to use the blinding
-// factor as a seed for deterministically generating the CTIDH private key
-// which participates in the group action operation.
-// This will require a change to the high-ctidh library.
+// Note that the given blindingFactor must be PrivateKeySize bytes in length.
+// This blindingFactor is used as the input to an hkdf which is used in
+// deterministically generating a new valid CSIDH private key which will
+// act as the actual blinding factor in the group action operation.
 func Blind(blindingFactor []byte, publicKey *PublicKey) (*PublicKey, error) {
 	if len(blindingFactor) != PrivateKeySize {
 		return nil, ErrBlindDataSizeInvalid
 	}
-
-	privKey := new(PrivateKey)
-	err := privKey.FromBytes(blindingFactor)
-	if err != nil {
-		return nil, err
-	}
-	return groupAction(privKey, publicKey), nil
+	var hkdfInfo = []byte("CSIDH Blinding factor hkdf")
+	hkdf := hkdf.New(sha256.New, blindingFactor, nil, hkdfInfo)
+	blindPrivKey := GeneratePrivateKeyWithRNG(hkdf)
+	return groupAction(blindPrivKey, publicKey), nil
 }
 
 // Name returns the string naming of the current
