@@ -13,8 +13,7 @@ void fillrandom_custom(
   const size_t outsz,
   const uintptr_t context)
 {
-  (void) context;
-  go_fillrandom(outptr, outsz);
+  go_fillrandom((void*)context, outptr, outsz);
 }
 */
 import "C"
@@ -51,9 +50,41 @@ var (
 	// ErrCTIDH indicates a group action failure.
 	ErrCTIDH error = fmt.Errorf("%s: group action failure", Name())
 
-	privateKeyRNGLock sync.Mutex
-	privateKeyRNG     io.Reader = nil
+	rngMapLock sync.RWMutex
+
+	rngMap map[unsafe.Pointer]io.Reader
 )
+
+func save(key unsafe.Pointer, v io.Reader) {
+	if v == nil {
+		panic("save called with nil v")
+	}
+
+	rngMapLock.Lock()
+	rngMap[key] = v
+	rngMapLock.Unlock()
+}
+
+func restore(ptr unsafe.Pointer) (v io.Reader) {
+	if ptr == nil {
+		return nil
+	}
+
+	rngMapLock.RLock()
+	v = rngMap[ptr]
+	rngMapLock.RUnlock()
+	return
+}
+
+func unref(ptr unsafe.Pointer) {
+	if ptr == nil {
+		return
+	}
+
+	rngMapLock.Lock()
+	delete(rngMap, ptr)
+	rngMapLock.Unlock()
+}
 
 // ErrPEMKeyTypeMismatch returns an error indicating that we tried
 // to decode a PEM file containing a differing key type than the one
@@ -321,11 +352,12 @@ func GenerateKeyPair() (*PrivateKey, *PublicKey) {
 }
 
 //export go_fillrandom
-func go_fillrandom(outptr unsafe.Pointer, outsz C.size_t) {
+func go_fillrandom(context unsafe.Pointer, outptr unsafe.Pointer, outsz C.size_t) {
+	rng := restore(context)
+	if rng == nil {
+		panic("rng is nil")
+	}
 	buf := make([]byte, outsz)
-	privateKeyRNGLock.Lock()
-	rng := privateKeyRNG
-	privateKeyRNGLock.Unlock()
 	count, err := rng.Read(buf)
 	if err != nil {
 		panic(err)
@@ -341,14 +373,10 @@ func go_fillrandom(outptr unsafe.Pointer, outsz C.size_t) {
 }
 
 // GenerateKeyPairWithRNG uses the given RNG to derive a new keypair.
-// HOWEVER, if GenerateKeyPairWithRNG is called by multiple threads
-// then the rng is overwritten with each call which can unintentionally
-// cause multiple RNGs to be used to generate the keypair.
 func GenerateKeyPairWithRNG(rng io.Reader) (*PrivateKey, *PublicKey) {
-	privKey := new(PrivateKey)
-	privateKeyRNGLock.Lock()
-	privateKeyRNG = rng
-	privateKeyRNGLock.Unlock()
+	privKey := &PrivateKey{}
+	save(unsafe.Pointer(&privKey.privateKey), rng)
+	defer unref(unsafe.Pointer(&privKey.privateKey))
 	C.custom_gen_private(&privKey.privateKey)
 	return privKey, DerivePublicKey(privKey)
 }
@@ -411,6 +439,9 @@ func validateBitSize(bits int) {
 }
 
 func init() {
+
+	rngMap = make(map[unsafe.Pointer]io.Reader)
+
 	validateBitSize(C.BITS)
 	PrivateKeySize = C.primes_num
 	switch C.BITS {
