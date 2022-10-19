@@ -51,7 +51,7 @@ and set some environment variables:
 export CTIDH_BITS=1024
 cp ${P}/binding${CTIDH_BITS}.h ${P}/binding.h
 export CGO_CFLAGS="-g -I${P} -I${P}/high-ctidh -DBITS=${CTIDH_BITS}"
-export CGO_LDFLAGS="-L${P}/high-ctidh -Wl,-rpath,${P}/high-ctidh -lhighctidh_${CTIDH_BITS}"
+export CGO_LDFLAGS="-L${P}/high-ctidh -Wl,-rpath,${P}/high-ctidh,--allow-multiple-definition -lhighctidh_${CTIDH_BITS}"
 ```
 
 The the header file in place and these environment variables sets you

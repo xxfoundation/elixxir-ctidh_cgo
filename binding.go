@@ -6,7 +6,7 @@ package ctidh
 
 extern ctidh_fillrandom fillrandom_custom;
 
-void custom_gen_private(void* context, private_key *priv) {
+void custom_gen_private(void *const context, private_key *priv) {
   csidh_private_withrng((uintptr_t)context, priv, fillrandom_custom);
 }
 
@@ -15,7 +15,7 @@ void fillrandom_custom(
   const size_t outsz,
   const uintptr_t context)
 {
-  go_fillrandom((void*)context, outptr, outsz);
+  go_fillrandom(context, outptr, outsz);
 }
 */
 import "C"
