@@ -7,7 +7,7 @@ package ctidh
 extern ctidh_fillrandom fillrandom_custom;
 
 void custom_gen_private(void *const context, private_key *priv) {
-  csidh_private_withrng((uintptr_t)context, priv, fillrandom_custom);
+  csidh_private_withrng(priv, (uintptr_t)context, fillrandom_custom);
 }
 
 void fillrandom_custom(
@@ -334,8 +334,8 @@ func go_fillrandom(context unsafe.Pointer, outptr unsafe.Pointer, outsz C.size_t
 	}
 	p := uintptr(outptr)
 	for i := 0; i < int(outsz); i++ {
-		(*(*uint8)(unsafe.Pointer(p))) = uint8(buf[i])
-		p += 1
+		(*(*uint32)(unsafe.Pointer(p))) = uint32(buf[i])
+		p += 4
 	}
 }
 
