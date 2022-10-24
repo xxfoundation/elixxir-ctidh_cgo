@@ -18,18 +18,24 @@ Step 1
 Get high-ctidh:
 
 ```
-git clone https://git.xx.network/elixxir/high-ctidh.git
+git clone https://codeberg.org/io/highctidh.git
 ```
 
 Step 2
 ------
 
-Build the CTIDH C shared library files:
+Build the CTIDH C shared library files, portable:
 
 ```
 cd high-ctidh
-./autogen
-make libhighctidh_511.so libhighctidh_512.so libhighctidh_1024.so libhighctidh_2048.so
+make libhighctidh.so HIGHCTIDH_PORTABLE=1
+cd ..
+```
+or the amd64 assembler backend:
+
+```
+cd high-ctidh
+make libhighctidh.so HIGHCTIDH_PORTABLE=0
 cd ..
 ```
 
